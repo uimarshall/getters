@@ -2,9 +2,10 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import dotenv from 'dotenv';
-// import morganMiddleware from './logger/morganMiddleware';
 import cookieParser from 'cookie-parser';
 import morganMiddleware from './logger/morganMiddleware.js';
+import errorMiddleware from './middlewares/errors.js';
+import userRoutes from './routes/userRoutes.js';
 
 // Load the environment variables
 dotenv.config({ path: 'backend/src/config/.env' });
@@ -18,6 +19,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morganMiddleware);
 app.use(cors()); // Make sure you Enable CORS correctly, or you will get CORS errors.
+
+// Route middleware
+
+app.use('/api/v1/users', userRoutes);
+
+// Custom Error Middleware to handle error
+app.use(errorMiddleware);
 
 app.get('/', (req, res) => {
   res.send('Express + Linting + found solution, better');
