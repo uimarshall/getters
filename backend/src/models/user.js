@@ -1,5 +1,7 @@
 import { Schema, model } from 'mongoose';
 import validator from 'validator';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const userSchema = new Schema(
   {
@@ -29,7 +31,7 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: [true, 'Please enter your email'],
-      unique: true,
+      unique: [true, 'Email already exists'],
       validate: [validator.isEmail, 'Please enter a valid email address'],
     },
     password: {
@@ -114,6 +116,29 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// Encrypt password before saving user to database
+userSchema.pre('save', async function (next) {
+  // Check if password is modified
+  if (!this.isModified('password')) {
+    next();
+  }
+  const hash = await bcrypt.hash(this.password, 10);
+  this.password = hash;
+});
+
+// Compare user password
+userSchema.methods.comparePassword = async function (currEnteredPassword) {
+  const passwordMatch = await bcrypt.compare(currEnteredPassword, this.password);
+  return passwordMatch;
+};
+
+// Return JWT token
+userSchema.methods.getJwtToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRATION_TIME,
+  });
+};
 
 const User = model('User', userSchema);
 
