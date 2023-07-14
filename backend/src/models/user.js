@@ -2,6 +2,7 @@ import { Schema, model } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 const userSchema = new Schema(
   {
@@ -138,6 +139,21 @@ userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRATION_TIME,
   });
+};
+
+// Generate password reset token
+
+userSchema.methods.getResetPasswordToken = function () {
+  // Generate token
+  const resetToken = crypto.randomBytes(20).toString('hex');
+
+  // Hash/encrypt token and set to resetPasswordToken
+  // This is saved in the database
+  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  // Set token expire time in seconds(30mins)
+  this.resetPasswordExpire = Date.now() + 30 * 60 * 1000;
+  return resetToken;
 };
 
 const User = model('User', userSchema);

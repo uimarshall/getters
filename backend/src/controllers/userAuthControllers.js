@@ -1,9 +1,11 @@
 import asyncHandler from 'express-async-handler';
 import { nanoid } from 'nanoid';
 
+import crypto from 'crypto';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/user.js';
 import ErrorHandler from '../utils/errorHandler.js';
+import sendEmail from '../utils/sendEmail.js';
 
 // @desc Register a new user
 // @route POST /api/v1/users/register
@@ -82,4 +84,91 @@ const logoutUser = asyncHandler(async (req, res, next) => {
   });
 });
 
-export { registerUser, loginUser, logoutUser };
+// @desc: Forgot Password
+// @route: /api/v1/users/password/forgot
+// @access: protected
+
+const forgotPassword = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+  const userFound = await User.findOne({ email });
+  if (!userFound) {
+    next(new ErrorHandler(`User with this email: ${email} not found`, 404));
+    return;
+  }
+  // Get reset token
+  const resetToken = userFound.getResetPasswordToken();
+
+  // save the token to the user
+
+  await userFound.save({ validateBeforeSave: false });
+
+  // Create reset password url
+  // req.protocol=https or http
+  const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/password/reset/${resetToken}`;
+
+  // const resetUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`;
+
+  // Message to user
+  const message = `Your password reset token is as follows:\n\n${resetUrl}\n\nIf you have not requested this email, then ignore it!`;
+
+  try {
+    await sendEmail({
+      email: userFound.email,
+      subject: 'GetHub Password Recovery',
+      message,
+    });
+    res.status(200).json({
+      success: true,
+      message: `Email sent to: ${userFound.email}`,
+    });
+  } catch (error) {
+    userFound.resetPasswordToken = undefined;
+    userFound.resetPasswordExpire = undefined;
+    // We cannot save to db if error
+    await userFound.save({ validateBeforeSave: false });
+    next(new ErrorHandler(error.message, 500));
+  }
+});
+
+// @desc: Password Reset
+// @route: /api/v1/users/password/reset/:token
+// @access: protected
+
+const resetPassword = asyncHandler(async (req, res, next) => {
+  // Hash url token
+  const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  // Compare the hashed token to the one stored in the Db
+  const userFound = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!userFound) {
+    next(new ErrorHandler('Password reset token is invalid or has expired', 400));
+    return;
+  }
+
+  if (req.body.password !== req.body.confirmPassword) {
+    next(new ErrorHandler('Password does not match!', 400));
+    return;
+  }
+
+  //  If user found - Setup new password
+  userFound.password = req.body.password;
+  // Destroy the token by setting it to undefined
+  userFound.resetPasswordToken = undefined;
+  userFound.resetPasswordExpire = undefined;
+
+  await userFound.save();
+
+  // Send token again
+  generateToken(userFound, 200, res);
+});
+
+// test user protected routes
+
+const protectedUser = asyncHandler(async (req, res) => {
+  res.json({ data: 'I am authenticated' });
+});
+
+export { registerUser, loginUser, logoutUser, forgotPassword, protectedUser, resetPassword };
