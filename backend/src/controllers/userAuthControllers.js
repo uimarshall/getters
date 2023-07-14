@@ -68,4 +68,18 @@ const loginUser = asyncHandler(async (req, res, next) => {
   generateToken(userFound, 200, res);
 });
 
-export { registerUser, loginUser };
+const logoutUser = asyncHandler(async (req, res, next) => {
+  // To logout is to clear the cookie stored during login/sign up,
+  // hence set token to 'null' and expires it immediately with Date.now() to remove it from the session
+  res.cookie('token', null, {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully',
+  });
+});
+
+export { registerUser, loginUser, logoutUser };

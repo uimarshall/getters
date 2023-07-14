@@ -1,5 +1,11 @@
 import ErrorHandler from '../utils/errorHandler.js';
 
+const notFound = (req, res, next) => {
+  const error = new Error(`Not Found - ${req.originalUrl}`); // 'req.originalUrl' is the url that was requested
+  res.status(404);
+  next(error); // next() will pass the error to the next middleware
+};
+
 const errorMiddleware = (er, req, res, next) => {
   const err = er;
   err.statusCode = err.statusCode || 500;
@@ -48,4 +54,6 @@ const errorMiddleware = (er, req, res, next) => {
   }
 };
 
-export default errorMiddleware;
+// To catch all non-existing routes, we will create a middleware that will handle all the non-existing routes. This middleware will be called after all the routes have been checked and if the route is not found, it will be called.
+
+export { errorMiddleware, notFound };
