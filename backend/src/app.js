@@ -4,7 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import morganMiddleware from './logger/morganMiddleware.js';
-import errorMiddleware from './middlewares/errors.js';
+import { errorMiddleware, notFound } from './middlewares/errors.js';
 import userRoutes from './routes/userRoutes.js';
 
 // Load the environment variables
@@ -25,6 +25,7 @@ app.use(cors()); // Make sure you Enable CORS correctly, or you will get CORS er
 app.use('/api/v1/users', userRoutes);
 
 // Custom Error Middleware to handle error
+app.use(notFound);
 app.use(errorMiddleware);
 
 app.get('/', (req, res) => {

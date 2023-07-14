@@ -5,7 +5,7 @@ const generateToken = (user, statusCode, res) => {
   // Options for cookie
 
   const options = {
-    expires: new Date(Date.now() + process.env.COOKIE_EXPIRATION_TIME * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + process.env.COOKIE_EXPIRATION_TIME * 60 * 60 * 1000), // 1 hour
     httpOnly: true, // This will make it inaccessible using Js code in frontend
     secure: process.env.NODE_ENV === 'PRODUCTION',
     sameSite: 'strict',
