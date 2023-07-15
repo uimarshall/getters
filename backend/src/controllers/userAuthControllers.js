@@ -205,6 +205,29 @@ const updatePassword = asyncHandler(async (req, res, next) => {
   generateToken(userFound, 200, res);
 });
 
+// @desc: Update user profile/user-details
+// @route: /api/v1/users/me/update
+// @access: protected
+
+const updateProfile = asyncHandler(async (req, res, next) => {
+  const { firstname, email, lastname } = req.body;
+
+  const newUserData = { firstname, email, lastname };
+
+  // Update profile photo: TODO
+
+  const userFound = await User.findByIdAndUpdate(req.user.id, newUserData, {
+    new: true,
+    runValidators: true,
+    useFindAndModify: false,
+  });
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    data: userFound,
+  });
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
@@ -220,4 +243,5 @@ export {
   resetPassword,
   getUserProfile,
   updatePassword,
+  updateProfile,
 };

@@ -9,6 +9,7 @@ import {
   resetPassword,
   getUserProfile,
   updatePassword,
+  updateProfile,
 } from '../controllers/userAuthControllers.js';
 import requireAuthentication from '../middlewares/authMiddleware.js';
 
@@ -32,6 +33,8 @@ router.get('/me', requireAuthentication, getUserProfile);
 
 // Update password
 router.put('/password/update', requireAuthentication, updatePassword);
+// Update user profile or details
+router.put('/me/update', requireAuthentication, updateProfile);
 
 router.get('/auth', requireAuthentication, protectedUser);
 
