@@ -1,6 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import { nanoid } from 'nanoid';
-
+import { StatusCodes } from 'http-status-codes';
 import crypto from 'crypto';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/user.js';
@@ -11,11 +11,16 @@ import sendEmail from '../utils/sendEmail.js';
 // @route POST /api/v1/users/register
 // @access Public
 const registerUser = asyncHandler(async (req, res, next) => {
-  const { firstname, lastname, email, password } = req.body;
+  const { firstname, lastname, email, password, bio, location } = req.body;
   const userExists = await User.findOne({ email });
 
   if (userExists) {
     return next(new ErrorHandler('User already exists', 400));
+  }
+
+  // check if password length is greater than 8.
+  if (password.length < 8) {
+    return next(new ErrorHandler('Password must be at least 8 characters long', 400));
   }
 
   // console.log(process.env.CLIENT_URL);
@@ -36,6 +41,8 @@ const registerUser = asyncHandler(async (req, res, next) => {
       public_id: 'avatars/h2yrh8qucvejk139t8ro',
       url: 'https://res.cloudinary.com/uimarshall/image/upload/v1625707364/avatars/h2yrh8qucvejk139t8ro.jpg',
     },
+    bio,
+    location,
   });
 
   return generateToken(newUser, 201, res);
@@ -165,10 +172,24 @@ const resetPassword = asyncHandler(async (req, res, next) => {
   generateToken(userFound, 200, res);
 });
 
+// @desc: Get currently logged in user details
+// @route: /api/v1/users/me
+// @access: protected
+
+const getUserProfile = asyncHandler(async (req, res, next) => {
+  // console.log(req.user);
+  const userFound = await User.findById(req.user.id);
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    data: userFound,
+  });
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
   res.json({ data: 'I am authenticated' });
 });
 
-export { registerUser, loginUser, logoutUser, forgotPassword, protectedUser, resetPassword };
+export { registerUser, loginUser, logoutUser, forgotPassword, protectedUser, resetPassword, getUserProfile };

@@ -7,6 +7,7 @@ import {
   forgotPassword,
   protectedUser,
   resetPassword,
+  getUserProfile,
 } from '../controllers/userAuthControllers.js';
 import requireAuthentication from '../middlewares/authMiddleware.js';
 
@@ -24,6 +25,9 @@ router.post('/password/forgot', forgotPassword);
 
 // Reset password
 router.put('/password/reset/:token', resetPassword);
+
+// Currently Login user-details or profile
+router.get('/me', requireAuthentication, getUserProfile);
 
 router.get('/auth', requireAuthentication, protectedUser);
 

@@ -38,7 +38,7 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: [true, 'Please enter your password'],
-      minLength: [6, 'Your password must be at least 6 characters'],
+      minlength: [8, 'Your password must be at least 8 characters'],
       select: false, // Don't display the password along the user info
     },
     profile: {
@@ -69,6 +69,19 @@ const userSchema = new Schema(
     },
     bio: {
       type: String,
+      maxlength: [160, 'Your bio must not exceed 160 characters'],
+    },
+    joined: {
+      type: Date,
+      default: Date.now,
+    },
+    location: {
+      type: String,
+      required: [true, 'Please enter your location'],
+    },
+    work: {
+      type: String,
+      default: 'Technical Writer',
     },
 
     isBlocked: {
