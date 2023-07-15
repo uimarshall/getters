@@ -228,6 +228,36 @@ const updateProfile = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc: Get all users- Only admin can get all users
+// @route: /api/v1/users/admin
+// @access: protected
+
+const getAllUsers = asyncHandler(async (req, res, next) => {
+  const usersFound = await User.find();
+  res.status(StatusCodes.OK).json({
+    success: true,
+    count: usersFound.length,
+    data: usersFound,
+  });
+});
+
+// @desc: Get currently logged in user details
+// @route: /api/v1/users/admin/:id
+// @access: protected
+
+const getUserDetails = asyncHandler(async (req, res, next) => {
+  const userFound = await User.findById(req.params.id);
+  if (!userFound) {
+    next(new ErrorHandler(`User is not found with this id: ${req.params.id}`));
+    return;
+  }
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    data: userFound,
+  });
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
@@ -244,4 +274,6 @@ export {
   getUserProfile,
   updatePassword,
   updateProfile,
+  getAllUsers,
+  getUserDetails,
 };

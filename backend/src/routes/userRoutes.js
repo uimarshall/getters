@@ -10,8 +10,10 @@ import {
   getUserProfile,
   updatePassword,
   updateProfile,
+  getAllUsers,
+  getUserDetails,
 } from '../controllers/userAuthControllers.js';
-import requireAuthentication from '../middlewares/authMiddleware.js';
+import { requireAuthentication, requireAdminRole } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
@@ -35,7 +37,11 @@ router.get('/me', requireAuthentication, getUserProfile);
 router.put('/password/update', requireAuthentication, updatePassword);
 // Update user profile or details
 router.put('/me/update', requireAuthentication, updateProfile);
+// Get all users - only admin can do this
+router.get('/admin', requireAuthentication, requireAdminRole, getAllUsers);
+// Get single user details - only admin can do this
+router.get('/admin/:id', requireAuthentication, requireAdminRole, getUserDetails);
 
-router.get('/auth', requireAuthentication, protectedUser);
+router.get('/auth', requireAuthentication, requireAdminRole, protectedUser);
 
 export default router;
