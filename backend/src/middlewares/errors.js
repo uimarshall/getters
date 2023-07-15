@@ -46,6 +46,11 @@ const errorMiddleware = (er, req, res, next) => {
       const message = 'Web token is expired. Try Again!!!';
       error = new ErrorHandler(message, 400);
     }
+    // Handling Wrong JWT Error
+    if (err.name === 'JsonWebTokenError') {
+      const message = 'Web token is invalid. Try Again!!!';
+      error = new ErrorHandler(message, 400);
+    }
 
     res.status(error.statusCode).json({
       success: false,
