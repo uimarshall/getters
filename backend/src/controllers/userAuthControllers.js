@@ -258,6 +258,46 @@ const getUserDetails = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc: Update user profile/user-details
+// @route: /api/v1/users/admin/update/:id
+// @access: protected
+
+const updateUserProfile = asyncHandler(async (req, res, next) => {
+  const { firstname, lastname, email, isAdmin } = req.body;
+  const newUserData = { firstname, lastname, email, isAdmin };
+
+  const userFound = await User.findByIdAndUpdate(req.params.id, newUserData, {
+    new: true,
+    runValidators: true,
+    useFindAndModify: false,
+  });
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    data: userFound,
+  });
+});
+
+// @desc: Delete user
+// @route: /api/v1/users/admin/delete/:id
+// @access: protected
+
+const deleteUser = asyncHandler(async (req, res, next) => {
+  const userFound = await User.findById(req.params.id);
+  if (!userFound) {
+    next(new ErrorHandler(`User is not found with this id: ${req.params.id}`));
+    return;
+  }
+
+  // Remove avatar from cloudinary: TODO
+  await userFound.deleteOne();
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'User deleted successfully!',
+  });
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
@@ -276,4 +316,6 @@ export {
   updateProfile,
   getAllUsers,
   getUserDetails,
+  updateUserProfile,
+  deleteUser,
 };
