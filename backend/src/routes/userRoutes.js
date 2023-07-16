@@ -12,6 +12,8 @@ import {
   updateProfile,
   getAllUsers,
   getUserDetails,
+  updateUserProfile,
+  deleteUser,
 } from '../controllers/userAuthControllers.js';
 import { requireAuthentication, requireAdminRole } from '../middlewares/authMiddleware.js';
 
@@ -41,6 +43,12 @@ router.put('/me/update', requireAuthentication, updateProfile);
 router.get('/admin', requireAuthentication, requireAdminRole, getAllUsers);
 // Get single user details - only admin can do this
 router.get('/admin/:id', requireAuthentication, requireAdminRole, getUserDetails);
+
+// Update user profile/details - only admin can do this
+router.put('/admin/update/:id', requireAuthentication, requireAdminRole, updateUserProfile);
+
+// Delete user - only admin can do this
+router.delete('/admin/delete/:id', requireAuthentication, requireAdminRole, deleteUser);
 
 router.get('/auth', requireAuthentication, requireAdminRole, protectedUser);
 

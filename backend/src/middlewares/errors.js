@@ -27,6 +27,10 @@ const errorMiddleware = (er, req, res, next) => {
       const message = `Resource not found. Invalid:${err.path}`;
       error = new ErrorHandler(message, 400);
     }
+    if (err.name === 'CastError' && err.path === '_id') {
+      const message = `Resource not found. Invalid ${err.path}:${err.value}`;
+      error = new ErrorHandler(message, 400);
+    }
 
     // Handling Mongoose validation errors
     // This error occurs for fields that are required in the db schema.
