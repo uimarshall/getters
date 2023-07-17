@@ -1,6 +1,11 @@
 import { Router } from 'express';
 
-import { createCategory, getAllCategories, getSingleCategory } from '../controllers/categoryController.js';
+import {
+  createCategory,
+  getAllCategories,
+  getSingleCategory,
+  deleteCategory,
+} from '../controllers/categoryController.js';
 import { requireAuthentication, requireAdminRole } from '../middlewares/authMiddleware.js';
 
 const router = Router();
@@ -13,5 +18,8 @@ router.get('/list-all', getAllCategories);
 
 // Get single category
 router.get('/:slug', getSingleCategory);
+
+// Delete category
+router.delete('/:slug', deleteCategory, requireAuthentication, requireAdminRole);
 
 export default router;
