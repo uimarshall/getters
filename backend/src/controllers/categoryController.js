@@ -31,10 +31,10 @@ const createCategory = asyncHandler(async (req, res, next) => {
 // @access: public
 const getAllCategories = asyncHandler(async (req, res) => {
   const categories = await Category.find({});
-  console.log(categories);
   return res.status(StatusCodes.OK).json({
     success: true,
     message: 'All categories',
+    count: categories.length,
     data: categories,
   });
 });
@@ -57,4 +57,21 @@ const getSingleCategory = asyncHandler(async (req, res, next) => {
   });
 });
 
-export { createCategory, getAllCategories, getSingleCategory };
+// @desc Delete the category
+// @route /api/v1/category/:slug
+// @access private
+
+const deleteCategory = asyncHandler(async (req, res, next) => {
+  const { slug } = req.params;
+  const categoryFound = await Category.findOneAndRemove({ slug });
+  if (!categoryFound) {
+    return next(new ErrorHandler('Category not found', StatusCodes.NOT_FOUND));
+  }
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Category deleted successfully',
+  });
+});
+
+export { createCategory, getAllCategories, getSingleCategory, deleteCategory };
