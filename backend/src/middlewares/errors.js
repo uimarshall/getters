@@ -55,6 +55,11 @@ const errorMiddleware = (er, req, res, next) => {
       const message = 'Web token is invalid. Try Again!!!';
       error = new ErrorHandler(message, 400);
     }
+    // Handling Slugify Error
+    if (err.message === 'slugify: string argument expected') {
+      const message = 'Please enter category name first';
+      error = new ErrorHandler(message, 400);
+    }
 
     res.status(error.statusCode).json({
       success: false,
