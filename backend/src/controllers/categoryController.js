@@ -65,7 +65,7 @@ const deleteCategory = asyncHandler(async (req, res, next) => {
   const { slug } = req.params;
   const categoryFound = await Category.findOneAndRemove({ slug });
   if (!categoryFound) {
-    return next(new ErrorHandler('Category not found', StatusCodes.NOT_FOUND));
+    return next(new ErrorHandler('The Category you want to delete does not exist', StatusCodes.NOT_FOUND));
   }
 
   return res.status(StatusCodes.OK).json({

@@ -6,14 +6,14 @@ import crypto from 'crypto';
 
 const userSchema = new Schema(
   {
-    firstname: {
+    firstName: {
       type: String,
       required: [true, 'Please enter your First name'],
       trim: true,
       lowercase: true,
       maxlength: [32, 'Your First name must not exceed 32 characters'],
     },
-    lastname: {
+    lastName: {
       type: String,
       required: [true, 'Please enter your Last name'],
       trim: true,

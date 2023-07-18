@@ -4,9 +4,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import morganMiddleware from './logger/morganMiddleware.js';
-import { errorMiddleware, notFound } from './middlewares/errors.js';
+import { errorMiddleware, notFound } from './middlewares/errorsMiddleware.js';
 import userRoutes from './routes/userRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import tagRoutes from './routes/tagRoutes.js';
 
 // Load the environment variables
 dotenv.config({ path: 'backend/src/config/.env' });
@@ -24,7 +25,8 @@ app.use(cors()); // Make sure you Enable CORS correctly, or you will get CORS er
 // Route middleware
 
 app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/category', categoryRoutes);
+app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/tags', tagRoutes);
 
 // Custom Error Middleware to handle error
 app.use(notFound);

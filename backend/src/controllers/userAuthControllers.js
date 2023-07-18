@@ -11,7 +11,7 @@ import sendEmail from '../utils/sendEmail.js';
 // @route POST /api/v1/users/register
 // @access Public
 const registerUser = asyncHandler(async (req, res, next) => {
-  const { firstname, lastname, email, password, bio, location } = req.body;
+  const { firstName, lastName, email, password, bio, location } = req.body;
   const userExists = await User.findOne({ email });
 
   if (userExists) {
@@ -31,8 +31,8 @@ const registerUser = asyncHandler(async (req, res, next) => {
   // console.log(profile);
 
   const newUser = await User.create({
-    firstname,
-    lastname,
+    firstName,
+    lastName,
     email,
     username,
     profile,
