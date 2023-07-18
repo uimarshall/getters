@@ -14,7 +14,7 @@ const router = Router();
 router.post('/admin/new', requireAuthentication, requireAdminRole, createCategory);
 
 // Get all categories
-router.get('/list-all', getAllCategories);
+router.get('/', getAllCategories);
 
 // Get single category
 router.get('/:slug', getSingleCategory);

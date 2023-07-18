@@ -1,8 +1,8 @@
 import ErrorHandler from '../utils/errorHandler.js';
 
 const notFound = (req, res, next) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`); // 'req.originalUrl' is the url that was requested
-  res.status(404);
+  const error = new Error(`Route Not Found - ${req.originalUrl}`); // 'req.originalUrl' is the url that was requested
+  res.status(404).json({ message: error.message });
   next(error); // next() will pass the error to the next middleware
 };
 
