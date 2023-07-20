@@ -14,6 +14,9 @@ const categorySchema = new Schema(
       unique: true,
       index: true,
     },
+    posts: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Blog' }],
+    },
   },
   { timestamps: true }
 );

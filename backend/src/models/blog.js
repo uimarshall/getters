@@ -19,7 +19,7 @@ const blogSchema = new Schema(
     body: {
       type: {},
       required: [true, 'Please enter blog body'],
-      minlength: [200, 'Blog body must be at least 200 characters long'],
+      minlength: [20, 'Blog body must be at least 200 characters long'],
       maxlength: [2000000, 'Blog body cannot exceed 2,000,000 characters'],
     },
     excerpt: {
@@ -35,7 +35,6 @@ const blogSchema = new Schema(
     photo: {
       data: Buffer,
       contentType: String,
-      required: [true, 'Post image is required'],
     },
     categories: [{ type: ObjectId, ref: 'Category', required: [true, 'Post category is required'] }],
     tags: [{ type: ObjectId, ref: 'Tag', required: true }],
