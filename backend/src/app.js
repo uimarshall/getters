@@ -8,6 +8,7 @@ import { errorMiddleware, notFound } from './middlewares/errorsMiddleware.js';
 import userRoutes from './routes/userRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import tagRoutes from './routes/tagRoutes.js';
+import blogRoutes from './routes/blogRoutes.js';
 
 // Load the environment variables
 dotenv.config({ path: 'backend/src/config/.env' });
@@ -27,6 +28,7 @@ app.use(cors()); // Make sure you Enable CORS correctly, or you will get CORS er
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/categories', categoryRoutes);
 app.use('/api/v1/tags', tagRoutes);
+app.use('/api/v1/blogs', blogRoutes);
 
 // Custom Error Middleware to handle error
 app.use(notFound);

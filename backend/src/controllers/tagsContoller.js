@@ -1,7 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import { StatusCodes } from 'http-status-codes';
 import slugify from 'slugify';
-import Tag from '../models/tags.js';
+import Tag from '../models/tag.js';
 import ErrorHandler from '../utils/errorHandler.js';
 
 // @desc Create a new tag

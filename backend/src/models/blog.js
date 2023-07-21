@@ -16,26 +16,25 @@ const blogSchema = new Schema(
       unique: true,
       index: true,
     },
-    body: {
-      type: {},
-      required: [true, 'Please enter blog body'],
-      minlength: [200, 'Blog body must be at least 200 characters long'],
-      maxlength: [2000000, 'Blog body cannot exceed 2,000,000 characters'],
-    },
-    excerpt: {
-      type: String,
-      maxlength: [1000, 'Blog excerpt cannot exceed 1000 characters'],
-    },
+    // body: {
+    //   type: {},
+    //   required: [true, 'Please enter blog body'],
+    //   minlength: [20, 'Blog body must be at least 200 characters long'],
+    //   maxlength: [2000000, 'Blog body cannot exceed 2,000,000 characters'],
+    // },
+    // excerpt: {
+    //   type: String,
+    //   maxlength: [1000, 'Blog excerpt cannot exceed 1000 characters'],
+    // },
     metaTitle: {
       type: String,
     },
-    metaDesc: {
-      type: String,
-    },
+    // metaDesc: {
+    //   type: String,
+    // },
     photo: {
       data: Buffer,
       contentType: String,
-      required: [true, 'Post image is required'],
     },
     categories: [{ type: ObjectId, ref: 'Category', required: [true, 'Post category is required'] }],
     tags: [{ type: ObjectId, ref: 'Tag', required: true }],
