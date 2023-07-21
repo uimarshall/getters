@@ -18,29 +18,29 @@ import User from '../models/user.js';
 // @route: /api/v1/blogs
 // @access: private
 const createBlog = asyncHandler(async (req, res, next) => {
-  const { title, body, categories, tags } = req.body;
+  const { title, categories, tags } = req.body;
 
   if (!title || !title.length) {
     return next(new ErrorHandler('Title is required', StatusCodes.BAD_REQUEST));
   }
 
-  const excerpt = stripHtml(body.substring(0, 160));
+  // const excerpt = stripHtml(body.substring(0, 160));
   const slug = slugify(title).toLowerCase();
   const metaTitle = `${title} | ${process.env.APP_NAME}`;
-  const metaDesc = stripHtml(body.substring(0, 160));
+  // const metaDesc = stripHtml(body.substring(0, 160));
 
   const arrayOfCategories = categories && categories.split(',');
   const arrayOfTags = tags && tags.split(',');
 
   const savedBlog = await Blog.create({
     title,
-    body,
+    // body,
     tags,
     postedBy: req.user._id,
     slug,
     metaTitle,
-    metaDesc,
-    excerpt,
+    // metaDesc
+    // excerpt,
   });
   await Blog.findByIdAndUpdate(savedBlog._id, { $push: { categories: arrayOfCategories } }, { new: true });
   await Blog.findByIdAndUpdate(savedBlog._id, { $push: { tags: arrayOfTags } }, { new: true });
