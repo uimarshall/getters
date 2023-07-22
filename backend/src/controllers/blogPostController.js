@@ -13,48 +13,64 @@ import Tag from '../models/tag.js';
 
 import ErrorHandler from '../utils/errorHandler.js';
 import User from '../models/user.js';
+import stringTrim from '../utils/blogTrim.js';
 
 // @desc: Create a new blog
 // @route: /api/v1/blogs
 // @access: private
 const createBlog = asyncHandler(async (req, res, next) => {
-  const { title, categories, tags } = req.body;
+  const { title, body, categories, tags } = req.body;
 
   if (!title || !title.length) {
     return next(new ErrorHandler('Title is required', StatusCodes.BAD_REQUEST));
   }
 
-  // const excerpt = stripHtml(body.substring(0, 160));
-  const slug = slugify(title).toLowerCase();
-  const metaTitle = `${title} | ${process.env.APP_NAME}`;
-  // const metaDesc = stripHtml(body.substring(0, 160));
+  if (!body || body.length < 200) {
+    return next(
+      new ErrorHandler('Content is too short, It must be at least 200 characters long', StatusCodes.BAD_REQUEST)
+    );
+  }
+
+  if (!categories || categories.length === 0) {
+    return next(new ErrorHandler('At least one category is required', StatusCodes.BAD_REQUEST));
+  }
+
+  if (!tags || tags.length === 0) {
+    return next(new ErrorHandler('At least one tag is required', StatusCodes.BAD_REQUEST));
+  }
 
   const arrayOfCategories = categories && categories.split(',');
   const arrayOfTags = tags && tags.split(',');
 
-  const savedBlog = await Blog.create({
-    title,
-    // body,
-    tags,
-    postedBy: req.user._id,
-    slug,
-    metaTitle,
-    // metaDesc
-    // excerpt,
-  });
-  await Blog.findByIdAndUpdate(savedBlog._id, { $push: { categories: arrayOfCategories } }, { new: true });
-  await Blog.findByIdAndUpdate(savedBlog._id, { $push: { tags: arrayOfTags } }, { new: true });
+  const blog = new Blog();
+  blog.title = title;
+  blog.body = body;
+  blog.excerpt = stringTrim(body, 320, ' ', '...');
+  blog.slug = slugify(title).toLowerCase();
+  blog.metaTitle = `${title} | ${process.env.APP_NAME}`;
+  blog.metaDesc = stripHtml(body.substring(0, 160)).result;
+  blog.author = req.user._id;
+
+  const savedBlog = await blog.save();
+
+  // categories and tags
+  let blogDoc = await Blog.findByIdAndUpdate(
+    savedBlog._id,
+    { $push: { categories: arrayOfCategories } },
+    { new: true }
+  );
+  blogDoc = await Blog.findByIdAndUpdate(savedBlog._id, { $push: { tags: arrayOfTags } }, { new: true });
 
   // Associate post to a user
 
-  await User.findByIdAndUpdate(req?.user?._id, { $push: { posts: savedBlog._id } }, { new: true });
+  // await User.findByIdAndUpdate(req?.user?._id, { $push: { posts: savedBlog._id } }, { new: true });
 
-  await Category.findByIdAndUpdate(req?.user?._id, { $push: { posts: savedBlog._id } }, { new: true });
+  // await Category.findByIdAndUpdate(req?.user?._id, { $push: { posts: savedBlog._id } }, { new: true });
 
   return res.status(StatusCodes.CREATED).json({
     success: true,
     message: 'Blog created successfully',
-    data: savedBlog,
+    data: blogDoc,
   });
 });
 
@@ -77,10 +93,10 @@ const createBlog = asyncHandler(async (req, res, next) => {
 //         new ErrorHandler('Content is too short, It must be at least 200 characters long', StatusCodes.BAD_REQUEST)
 //       );
 //     }
-//     if (!categories || !categories.length === 0) {
+//     if (!categories || categories.length === 0) {
 //       return next(new ErrorHandler('At least one category is required', StatusCodes.BAD_REQUEST));
 //     }
-//     if (!tags || !tags.length === 0) {
+//     if (!tags || tags.length === 0) {
 //       return next(new ErrorHandler('At least one tag is required', StatusCodes.BAD_REQUEST));
 //     }
 
