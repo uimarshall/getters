@@ -139,7 +139,7 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
     const blogs = await Blog.find({})
       .populate('categories', '_id name slug')
       .populate('tags', '_id name slug')
-      .populate('postedBy', '_id name username')
+      .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
       .select('_id title slug excerpt categories tags postedBy createdAt updatedAt');
     return res.status(StatusCodes.OK).json({
       success: true,
