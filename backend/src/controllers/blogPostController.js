@@ -14,6 +14,7 @@ import Tag from '../models/tag.js';
 import ErrorHandler from '../utils/errorHandler.js';
 import User from '../models/user.js';
 import stringTrim from '../utils/blogTrim.js';
+import logger from '../logger/logger.js';
 
 // @desc: Create a new blog
 // @route: /api/v1/blogs
@@ -74,63 +75,6 @@ const createBlog = asyncHandler(async (req, res, next) => {
   });
 });
 
-// // @desc: Create a new blog
-// // @route: /api/v1/blogs
-// // @access: private
-// const createBlog = asyncHandler(async (req, res, next) => {
-//   const form = formidable({ keepExtensions: true });
-//   form.parse(req, async (err, fields, files) => {
-//     if (err) {
-//       return next(new ErrorHandler('Image could not be uploaded', StatusCodes.BAD_REQUEST));
-//     }
-
-//     const { title, body, categories, tags } = fields;
-//     if (!title || !title.length) {
-//       return next(new ErrorHandler('Title is required', StatusCodes.BAD_REQUEST));
-//     }
-//     if (!body || body.length < 200) {
-//       return next(
-//         new ErrorHandler('Content is too short, It must be at least 200 characters long', StatusCodes.BAD_REQUEST)
-//       );
-//     }
-//     if (!categories || categories.length === 0) {
-//       return next(new ErrorHandler('At least one category is required', StatusCodes.BAD_REQUEST));
-//     }
-//     if (!tags || tags.length === 0) {
-//       return next(new ErrorHandler('At least one tag is required', StatusCodes.BAD_REQUEST));
-//     }
-
-//     const blog = new Blog();
-//     blog.title = title;
-//     blog.body = body;
-//     blog.excerpt = stripHtml(body.substring(0, 160)).result;
-//     blog.slug = slugify(title).toLowerCase();
-//     blog.metaTitle = `${title} | ${process.env.APP_NAME}`;
-//     blog.metaDesc = stripHtml(body.substring(0, 160)).result;
-//     blog.postedBy = req.user._id;
-//     // categories and tags
-//     const arrayOfCategories = categories && categories.split(',');
-//     const arrayOfTags = tags && tags.split(',');
-
-//     if (files.photo) {
-//       if (files.photo.size > 2000000) {
-//         return next(new ErrorHandler('Image should be less than 2MB in size', StatusCodes.BAD_REQUEST));
-//       }
-//       blog.photo.data = fs.readFileSync(files.photo.path);
-//       blog.photo.contentType = files.photo.type;
-//     }
-
-//     const savedBlog = await blog.save();
-//     await Blog.findByIdAndUpdate(savedBlog._id, { $push: { categories: arrayOfCategories } }, { new: true });
-//     await Blog.findByIdAndUpdate(savedBlog._id, { $push: { tags: arrayOfTags } }, { new: true });
-//     return res.status(StatusCodes.CREATED).json({
-//       success: true,
-//       message: 'Blog created successfully',
-//       data: savedBlog,
-//     });
-//   });
-// });
-
 // @desc: Get all blogs
 // @route: /api/v1/blogs
 // @access: public
@@ -151,6 +95,55 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
   }
 });
 
+// @desc: list all blog categories and tags
+// @route: /api/v1/blogs/blogs-categories-tags
+// @access: public
+
+const getAllBlogsCategoriesAndTags = asyncHandler(async (req, res, next) => {
+  logger.info(
+    // Get number of documents already in collection
+    `${await Blog.estimatedDocumentCount()} documents already in the collection`
+  );
+  const limit = req.body.limit ? parseInt(req.body.limit, 10) : 10;
+  const skip = req.body.skip ? parseInt(req.body.skip, 10) : 0;
+
+  let blogs;
+  let categories;
+  let tags;
+
+  try {
+    const blogData = await Blog.find({})
+      .populate('categories', '_id name slug')
+      .populate('tags', '_id name slug')
+      .populate('author', '_id firstName lastName username')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('_id title slug excerpt categories tags postedBy createdAt updatedAt');
+
+    blogs = blogData;
+  } catch (error) {
+    return next(new ErrorHandler(error.message, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+  try {
+    const categoryData = await Category.find({});
+    categories = categoryData;
+  } catch (error) {
+    return next(new ErrorHandler(error.message, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+  try {
+    const tagData = await Tag.find({});
+    tags = tagData;
+  } catch (error) {
+    return next(new ErrorHandler(error.message, StatusCodes.INTERNAL_SERVER_ERROR));
+  }
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blogs, categories and tags fetched successfully',
+    data: { blogs, categories, tags, size: blogs.length },
+  });
+});
+
 // @desc: Get a single blog
 // @route: /api/v1/blog/:slug
 // @access: public
@@ -166,4 +159,4 @@ const updateBlog = asyncHandler(async (req, res, next) => {});
 // @access: private
 const deleteBlog = asyncHandler(async (req, res, next) => {});
 
-export { createBlog, getAllBlogs, getSingleBlog, updateBlog, deleteBlog };
+export { createBlog, getAllBlogs, getSingleBlog, updateBlog, deleteBlog, getAllBlogsCategoriesAndTags };
