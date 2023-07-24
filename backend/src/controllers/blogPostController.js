@@ -147,16 +147,72 @@ const getAllBlogsCategoriesAndTags = asyncHandler(async (req, res, next) => {
 // @desc: Get a single blog
 // @route: /api/v1/blog/:slug
 // @access: public
-const getSingleBlog = asyncHandler(async (req, res, next) => {});
+const getSingleBlog = asyncHandler(async (req, res, next) => {
+  const slug = req.params.slug.toLowerCase();
+  const blogFound = await Blog.findOne({ slug })
+    .populate('categories', '_id name slug')
+    .populate('tags', '_id name slug')
+    .populate('author', '_id firstName lastName username')
+    .select('_id title body slug metaTitle metaDesc categories tags postedBy createdAt updatedAt');
+  if (!blogFound) {
+    return next(new ErrorHandler('Blog post not found', StatusCodes.NOT_FOUND));
+  }
+  return res.json({ status: 'success', message: 'Blog fetched successfully', data: blogFound });
+});
 
 // @desc: Update a blog
 // @route: /api/v1/blog/:slug
 // @access: private
 const updateBlog = asyncHandler(async (req, res, next) => {});
 
-// @desc: Delete a blog
+// @desc: Delete a blog by ADMIN
 // @route: /api/v1/blog/:slug
 // @access: private
-const deleteBlog = asyncHandler(async (req, res, next) => {});
+const deleteBlog = asyncHandler(async (req, res, next) => {
+  const slug = req.params.slug.toLowerCase();
+  const blogFound = await Blog.findOneAndRemove({ slug });
+  if (!blogFound) {
+    return next(new ErrorHandler('The Blog post you want to delete does not exist', StatusCodes.NOT_FOUND));
+  }
 
-export { createBlog, getAllBlogs, getSingleBlog, updateBlog, deleteBlog, getAllBlogsCategoriesAndTags };
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blog deleted successfully',
+  });
+});
+
+// @desc: Delete a blog by OWNER
+// @route: /api/v1/blog/:slug
+// @access: private
+
+const deleteBlogByOwner = asyncHandler(async (req, res, next) => {
+  // const slug = req.params.slug.toLowerCase();
+  // if (req.params.id === undefined) {
+  //   return next(new ErrorHandler('The Blog post you want to delete does not exist', StatusCodes.NOT_FOUND));
+  // }
+
+  const blogFound = await Blog.findById(req.params.id);
+  if (!blogFound) {
+    return next(new ErrorHandler('The Blog post you want to delete does not exist', StatusCodes.NOT_FOUND));
+  }
+  if (req.user._id !== blogFound.author) {
+    return next(new ErrorHandler('You are not authorized to delete this blog', StatusCodes.UNAUTHORIZED));
+  }
+
+  await Blog.findByIdAndDelete(req.params.id);
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blog deleted successfully',
+  });
+});
+
+export {
+  createBlog,
+  getAllBlogs,
+  getSingleBlog,
+  updateBlog,
+  deleteBlog,
+  getAllBlogsCategoriesAndTags,
+  deleteBlogByOwner,
+};

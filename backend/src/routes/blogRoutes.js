@@ -7,6 +7,7 @@ import {
   updateBlog,
   deleteBlog,
   getAllBlogsCategoriesAndTags,
+  deleteBlogByOwner,
 } from '../controllers/blogPostController.js';
 import { requireAuthentication } from '../middlewares/authMiddleware.js';
 
@@ -18,5 +19,6 @@ router.post('/blogs-categories-tags', getAllBlogsCategoriesAndTags);
 router.get('/:slug', getSingleBlog);
 router.put('/:slug', requireAuthentication, updateBlog);
 router.delete('/:slug', requireAuthentication, deleteBlog);
+router.delete('/:id', requireAuthentication, deleteBlogByOwner);
 
 export default router;
