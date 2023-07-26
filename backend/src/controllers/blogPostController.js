@@ -7,10 +7,10 @@ import fs from 'fs';
 import asyncHandler from 'express-async-handler';
 import slugify from 'slugify';
 import { StatusCodes } from 'http-status-codes';
+import _ from 'lodash';
 import Blog from '../models/blog.js';
 import Category from '../models/category.js';
 import Tag from '../models/tag.js';
-
 import ErrorHandler from '../utils/errorHandler.js';
 import User from '../models/user.js';
 import stringTrim from '../utils/blogTrim.js';
@@ -163,7 +163,40 @@ const getSingleBlog = asyncHandler(async (req, res, next) => {
 // @desc: Update a blog
 // @route: /api/v1/blog/:slug
 // @access: private
-const updateBlog = asyncHandler(async (req, res, next) => {});
+const updateBlog = asyncHandler(async (req, res, next) => {
+  const slug = req.params.slug.toLowerCase();
+  let blogTobeUpdated = await Blog.findOne({ slug });
+  if (!blogTobeUpdated) {
+    return next(new ErrorHandler('The Blog post you want to update does not exist', StatusCodes.NOT_FOUND));
+  }
+
+  const slugBeforeMerge = blogTobeUpdated.slug;
+  blogTobeUpdated = _.merge(blogTobeUpdated, req.body);
+  blogTobeUpdated.slug = slugBeforeMerge;
+  const { body, categories, tags } = req.body;
+  // if (req.body === undefined) {
+  //   return next(new ErrorHandler('The field you want to update does not exist', StatusCodes.NOT_FOUND));
+  // }
+  if (body) {
+    blogTobeUpdated.excerpt = stringTrim(body, 320, ' ', '...');
+    blogTobeUpdated.metaDesc = stripHtml(body.substring(0, 160)).result;
+  }
+  if (categories) {
+    blogTobeUpdated.categories = categories.split(',');
+  }
+  if (tags) {
+    blogTobeUpdated.tags = tags.split(',');
+  }
+
+  // TODO: Update Image
+
+  const updatedBlog = await blogTobeUpdated.save({ new: true, runValidators: true, useFindAndModify: false });
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blog updated successfully',
+    data: updatedBlog,
+  });
+});
 
 // @desc: Delete a blog by ADMIN
 // @route: /api/v1/blog/:slug
