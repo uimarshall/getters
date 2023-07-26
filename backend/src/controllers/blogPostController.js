@@ -166,11 +166,17 @@ const getSingleBlog = asyncHandler(async (req, res, next) => {
 const updateBlog = asyncHandler(async (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
   let blogTobeUpdated = await Blog.findOne({ slug });
+  if (!blogTobeUpdated) {
+    return next(new ErrorHandler('The Blog post you want to update does not exist', StatusCodes.NOT_FOUND));
+  }
 
   const slugBeforeMerge = blogTobeUpdated.slug;
   blogTobeUpdated = _.merge(blogTobeUpdated, req.body);
   blogTobeUpdated.slug = slugBeforeMerge;
   const { body, categories, tags } = req.body;
+  // if (req.body === undefined) {
+  //   return next(new ErrorHandler('The field you want to update does not exist', StatusCodes.NOT_FOUND));
+  // }
   if (body) {
     blogTobeUpdated.excerpt = stringTrim(body, 320, ' ', '...');
     blogTobeUpdated.metaDesc = stripHtml(body.substring(0, 160)).result;
@@ -184,7 +190,7 @@ const updateBlog = asyncHandler(async (req, res, next) => {
 
   // TODO: Update Image
 
-  const updatedBlog = await blogTobeUpdated.save({ new: true });
+  const updatedBlog = await blogTobeUpdated.save({ new: true, runValidators: true, useFindAndModify: false });
   return res.status(StatusCodes.OK).json({
     success: true,
     message: 'Blog updated successfully',
