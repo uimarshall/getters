@@ -165,7 +165,7 @@ const getSingleBlog = asyncHandler(async (req, res, next) => {
 // @access: private
 const updateBlog = asyncHandler(async (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
-  let blogTobeUpdated = Blog.findOne({ slug });
+  let blogTobeUpdated = await Blog.findOne({ slug });
 
   const slugBeforeMerge = blogTobeUpdated.slug;
   blogTobeUpdated = _.merge(blogTobeUpdated, req.body);
