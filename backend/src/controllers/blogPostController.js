@@ -84,6 +84,7 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
       .populate('categories', '_id name slug')
       .populate('tags', '_id name slug')
       .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
+
       .select('_id title slug excerpt categories tags postedBy createdAt updatedAt');
     return res.status(StatusCodes.OK).json({
       success: true,
@@ -215,7 +216,7 @@ const deleteBlog = asyncHandler(async (req, res, next) => {
 });
 
 // @desc: Delete a blog by OWNER
-// @route: /api/v1/blog/:slug
+// @route: /api/v1/blog/:id
 // @access: private
 
 const deleteBlogByOwner = asyncHandler(async (req, res, next) => {
@@ -226,13 +227,14 @@ const deleteBlogByOwner = asyncHandler(async (req, res, next) => {
 
   const blogFound = await Blog.findById(req.params.id);
   if (!blogFound) {
-    return next(new ErrorHandler('The Blog post you want to delete does not exist', StatusCodes.NOT_FOUND));
+    return next(new ErrorHandler(`Blog with id ${req.params.id} not found`, StatusCodes.NOT_FOUND));
   }
-  if (req.user._id !== blogFound.author) {
+  if (blogFound.author.toString() !== req.user._id.toString()) {
     return next(new ErrorHandler('You are not authorized to delete this blog', StatusCodes.UNAUTHORIZED));
   }
 
-  await Blog.findByIdAndDelete(req.params.id);
+  // await Blog.findByIdAndDelete(req.params.id);
+  await blogFound.deleteOne();
 
   return res.status(StatusCodes.OK).json({
     success: true,

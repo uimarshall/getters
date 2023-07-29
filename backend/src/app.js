@@ -9,6 +9,7 @@ import userRoutes from './routes/userRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import tagRoutes from './routes/tagRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
+import commentRoutes from './routes/commentRoutes.js';
 
 // Load the environment variables
 dotenv.config({ path: 'backend/src/config/.env' });
@@ -29,6 +30,7 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/categories', categoryRoutes);
 app.use('/api/v1/tags', tagRoutes);
 app.use('/api/v1/blogs', blogRoutes);
+app.use('/api/v1/comments', commentRoutes);
 
 // Custom Error Middleware to handle error
 app.use(notFound);

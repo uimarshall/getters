@@ -14,15 +14,24 @@ import Comment from '../models/comment.js';
 // @access: private
 const createComment = asyncHandler(async (req, res, next) => {
   const { commentText } = req.body;
+  const { id } = req.params;
 
-  const comment = Comment.create({ commentText, author: req.user._id, blogPostId: req.params.id });
+  if (!commentText) {
+    return next(new ErrorHandler('Please enter comment text', StatusCodes.BAD_REQUEST));
+  }
 
-  await Blog.findByIdAndUpdate(req.params.id, {
+  if (commentText.length > 1000) {
+    return next(new ErrorHandler('Comment cannot exceed 1000 characters', StatusCodes.BAD_REQUEST));
+  }
+
+  const comment = await Comment.create({ commentText, author: req.user._id, PostId: id });
+
+  await Blog.findByIdAndUpdate(id, {
     $push: { comments: comment._id }, // add comment to blog post
     new: true,
   });
 
-  res.status(StatusCodes.CREATED).json({
+  return res.status(StatusCodes.CREATED).json({
     success: true,
     message: 'Comment added successfully',
     data: comment,
@@ -99,12 +108,11 @@ const deleteComment = asyncHandler(async (req, res, next) => {
     return next(new ErrorHandler(`You are not authorized to delete this comment`, StatusCodes.UNAUTHORIZED));
   }
 
-  await comment.remove();
+  await comment.deleteOne();
 
   return res.status(StatusCodes.OK).json({
     success: true,
     message: 'Comment deleted successfully',
-    data: {},
   });
 });
 

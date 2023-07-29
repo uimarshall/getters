@@ -9,7 +9,7 @@ const commentSchema = new Schema({
     maxlength: [1000, 'Comment cannot exceed 1000 characters'],
   },
   author: { type: ObjectId, ref: 'User', required: true, index: true },
-  BlogPostId: { type: ObjectId, ref: 'Blog', required: true, index: true },
+  PostId: { type: ObjectId, ref: 'Blog', required: true, index: true },
 });
 
 const Comment = model('Comment', commentSchema);
