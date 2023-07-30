@@ -57,6 +57,14 @@ const userSchema = new Schema(
         required: true,
       },
     },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'prefer not to say', 'others'],
+    },
+    pronouns: {
+      type: String,
+      enum: ['he/him', 'she/her', 'they/them', 'prefer not to say', 'others'],
+    },
     posts: [
       {
         type: [Schema.Types.ObjectId],
@@ -125,8 +133,30 @@ const userSchema = new Schema(
       enum: ['Bronze', 'Silver', 'Gold'],
       default: 'Bronze',
     },
+    lastLogin: {
+      type: Date,
+      default: Date.now,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    notificationPreferences: {
+      email: {
+        type: String,
+        default: true,
+      },
+      sms: {
+        type: String,
+        default: false,
+      },
+    },
+    blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    likedPosts: [{ type: Schema.Types.ObjectId, ref: 'Blog' }],
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    accountVerificationToken: String,
+    accountVerificationExpire: Date,
   },
   { timestamps: true }
 );

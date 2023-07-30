@@ -6,6 +6,7 @@ import generateToken from '../utils/generateToken.js';
 import User from '../models/user.js';
 import ErrorHandler from '../utils/errorHandler.js';
 import sendEmail from '../utils/sendEmail.js';
+import logger from '../logger/logger.js';
 
 // @desc Register a new user
 // @route POST /api/v1/users/register
@@ -285,7 +286,7 @@ const updateUserProfile = asyncHandler(async (req, res, next) => {
 const deleteUser = asyncHandler(async (req, res, next) => {
   const userFound = await User.findById(req.params.id);
   if (!userFound) {
-    next(new ErrorHandler(`User is not found with this id: ${req.params.id}`));
+    next(new ErrorHandler(`User is not found with this id: ${req.params.id}`, 404));
     return;
   }
 
@@ -295,6 +296,115 @@ const deleteUser = asyncHandler(async (req, res, next) => {
   res.status(StatusCodes.OK).json({
     success: true,
     message: 'User deleted successfully!',
+  });
+});
+
+// @desc: Block a user by admin
+// @route: /api/v1/users/admin/block/:id
+// @access: protected
+
+const blockUserByAdmin = asyncHandler(async (req, res, next) => {
+  const userFound = await User.findById(req.params.id);
+  if (!userFound) {
+    next(new ErrorHandler(`User is not found with this id: ${req.params.id}`, 404));
+    return;
+  }
+
+  userFound.active = false;
+  const blockedUser = await User.findByIdAndUpdate(req.params.id, { isBlocked: true }, { new: true });
+  await userFound.save({ validateBeforeSave: false });
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'User blocked successfully!',
+    data: blockedUser,
+  });
+});
+
+// @desc: Block a user
+// @route: /api/v1/users/block/:id
+// @access: protected
+
+const blockUser = asyncHandler(async (req, res, next) => {
+  const userToBeBlocked = await User.findById(req.params.id);
+  if (!userToBeBlocked) {
+    next(new ErrorHandler(`User is not found with this id: ${req.params.id}`, 404));
+    return;
+  }
+
+  const postOwner = await User.findById(req.user.id);
+  // logger.debug(postOwner);
+  if (!postOwner) {
+    next(new ErrorHandler(`User is not found with this id: ${req.user.id}`, 404));
+    return;
+  }
+
+  // Check if the user to be blocked is the same as the user blocking
+  if (userToBeBlocked._id.toString() === postOwner._id.toString()) {
+    next(new ErrorHandler(`You cannot block yourself`, 400));
+    return;
+  }
+
+  // Check if the user to be blocked is already blocked
+  const isAlreadyBlocked = postOwner?.blockedUsers?.includes(userToBeBlocked._id);
+
+  if (isAlreadyBlocked) {
+    next(new ErrorHandler(`You have already blocked this user`, 400));
+    return;
+  }
+
+  postOwner?.blockedUsers.push(userToBeBlocked._id);
+  await postOwner.save({ validateBeforeSave: false });
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'User blocked successfully!',
+    data: postOwner,
+  });
+});
+
+// @desc unblock a user
+// @route: /api/v1/users/unblock/:id
+// @access: protected
+
+const unblockUser = asyncHandler(async (req, res, next) => {
+  const userIdToBeUnblocked = req.params.id;
+  const userToBeUnblocked = await User.findById(userIdToBeUnblocked);
+  if (!userToBeUnblocked) {
+    next(new ErrorHandler(`User is not found with this id: ${req.params.id}`, 404));
+    return;
+  }
+
+  const currentUserId = req.user.id;
+
+  const postOwner = await User.findById(currentUserId);
+  // logger.debug(postOwner);
+  if (!postOwner) {
+    next(new ErrorHandler(`User is not found with this id: ${currentUserId}`, 404));
+    return;
+  }
+
+  // Check if the user to be unblocked is the same as the user unblocking
+  if (userToBeUnblocked._id.toString() === postOwner._id.toString()) {
+    next(new ErrorHandler(`You cannot unblock yourself`, 400));
+    return;
+  }
+
+  // Check if the user to be unblocked is already blocked
+  const isAlreadyBlocked = postOwner?.blockedUsers?.includes(userToBeUnblocked._id);
+
+  if (!isAlreadyBlocked) {
+    next(new ErrorHandler(`You have not blocked this user`, 400));
+    return;
+  }
+
+  postOwner.blockedUsers = postOwner.blockedUsers.filter((id) => id.toString() !== userToBeUnblocked._id.toString());
+  await postOwner.save({ validateBeforeSave: false });
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'User unblocked successfully!',
+    data: postOwner,
   });
 });
 
@@ -318,4 +428,7 @@ export {
   getUserDetails,
   updateUserProfile,
   deleteUser,
+  blockUserByAdmin,
+  blockUser,
+  unblockUser,
 };
