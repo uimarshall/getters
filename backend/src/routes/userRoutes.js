@@ -14,6 +14,9 @@ import {
   getUserDetails,
   updateUserProfile,
   deleteUser,
+  blockUserByAdmin,
+  blockUser,
+  unblockUser,
 } from '../controllers/userAuthControllers.js';
 import { requireAuthentication, requireAdminRole } from '../middlewares/authMiddleware.js';
 
@@ -49,6 +52,14 @@ router.put('/admin/update/:id', requireAuthentication, requireAdminRole, updateU
 
 // Delete user - only admin can do this
 router.delete('/admin/delete/:id', requireAuthentication, requireAdminRole, deleteUser);
+
+// Block user by admin
+router.put('/admin/block-user/:id', requireAuthentication, requireAdminRole, blockUserByAdmin);
+// Block user
+router.put('/block-user/:id', requireAuthentication, blockUser);
+
+// Unblock user
+router.put('/unblock-user/:id', requireAuthentication, unblockUser);
 
 router.get('/auth', requireAuthentication, requireAdminRole, protectedUser);
 
