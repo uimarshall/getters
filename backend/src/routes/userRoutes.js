@@ -17,6 +17,7 @@ import {
   blockUserByAdmin,
   blockUser,
   unblockUser,
+  profileViewedBy,
 } from '../controllers/userAuthControllers.js';
 import { requireAuthentication, requireAdminRole } from '../middlewares/authMiddleware.js';
 
@@ -60,6 +61,9 @@ router.put('/block-user/:id', requireAuthentication, blockUser);
 
 // Unblock user
 router.put('/unblock-user/:id', requireAuthentication, unblockUser);
+
+// Profile views
+router.get('/profile-views/:id', requireAuthentication, profileViewedBy);
 
 router.get('/auth', requireAuthentication, requireAdminRole, protectedUser);
 

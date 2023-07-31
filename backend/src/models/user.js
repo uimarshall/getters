@@ -111,6 +111,10 @@ const userSchema = new Schema(
         ref: 'User',
       },
     ],
+    profileViews: {
+      type: Number,
+      default: 0,
+    },
     followers: [
       {
         type: [Schema.Types.ObjectId],
