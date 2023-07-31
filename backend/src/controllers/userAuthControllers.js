@@ -408,6 +408,45 @@ const unblockUser = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc: Profile viewed by other users.
+// @route: /api/v1/users/profile-views/:id
+// @access: protected
+
+const profileViewedBy = asyncHandler(async (req, res, next) => {
+  const userProfileToBeViewed = req.params.id;
+  const userFound = await User.findById(userProfileToBeViewed);
+  if (!userFound) {
+    next(new ErrorHandler(`User is not found with this id: ${userProfileToBeViewed}`, 404));
+    return;
+  }
+
+  const currentUserId = req.user.id;
+  if (currentUserId === userProfileToBeViewed) {
+    next(new ErrorHandler(`You cannot view your own profile`, 400));
+    return;
+  }
+
+  // Check if the user to be viewed is already viewed
+  const isAlreadyViewed = userFound?.viewedBy?.includes(currentUserId);
+  // TODO: What if you want to view the profile of someone you have blocked? Or someone who has blocked you? Or you want view a particular profile more than once?
+  // View profile more than once
+  // You can just cache it to prevent the user from making several requests simultaneously to view the same profile
+  if (isAlreadyViewed) {
+    next(new ErrorHandler(`You have already viewed this user profile`, 400));
+    return;
+  }
+
+  userFound.viewedBy.push(currentUserId);
+  userFound.profileViews += 1;
+  await userFound.save({ validateBeforeSave: false });
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'User profile viewed successfully!',
+    data: userFound,
+  });
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
@@ -431,4 +470,5 @@ export {
   blockUserByAdmin,
   blockUser,
   unblockUser,
+  profileViewedBy,
 };
