@@ -18,6 +18,8 @@ import {
   blockUser,
   unblockUser,
   profileViewedBy,
+  followUser,
+  unFollowUser,
 } from '../controllers/userAuthControllers.js';
 import { requireAuthentication, requireAdminRole } from '../middlewares/authMiddleware.js';
 
@@ -64,6 +66,12 @@ router.put('/unblock-user/:id', requireAuthentication, unblockUser);
 
 // Profile views
 router.get('/profile-views/:id', requireAuthentication, profileViewedBy);
+
+// Following a user
+router.put('/following/:id', requireAuthentication, followUser);
+
+// Unfollowing a user
+router.put('/un-following/:id', requireAuthentication, unFollowUser);
 
 router.get('/auth', requireAuthentication, requireAdminRole, protectedUser);
 

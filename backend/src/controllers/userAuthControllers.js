@@ -447,6 +447,104 @@ const profileViewedBy = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc PUT follow the user
+// @route: /api/v1/users/follow/:id
+// @access: protected
+
+const followUser = asyncHandler(async (req, res, next) => {
+  const userToBeFollowed = req.params.id;
+  const userFound = await User.findById(userToBeFollowed);
+  if (!userFound) {
+    next(new ErrorHandler(`User is not found with this id: ${userToBeFollowed}`, 404));
+    return;
+  }
+
+  const currentUserId = req.user.id;
+  if (currentUserId.toString() === userToBeFollowed.toString()) {
+    next(new ErrorHandler(`You cannot follow yourself`, 400));
+    return;
+  }
+
+  // Check if the user to be followed is already followed
+  const isAlreadyFollowed = userFound?.followers?.includes(currentUserId);
+  if (isAlreadyFollowed) {
+    next(new ErrorHandler(`You have already followed this user`, 400));
+  }
+
+  // userFound.followers.push(currentUserId);
+  // await userFound.save({ validateBeforeSave: false });
+  // Push the user to be followed to the following field/list of the current user
+  const updateCurrentUser = await User.findByIdAndUpdate(
+    currentUserId,
+    {
+      $addToSet: { following: userToBeFollowed },
+    },
+    { new: true }
+  );
+
+  // Push the current user to the followers field/list of the user to be followed
+  const updateUserToBeFollowed = await User.findByIdAndUpdate(
+    userToBeFollowed,
+    {
+      $addToSet: { followers: currentUserId },
+    },
+    { new: true }
+  );
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: `You have successfully followed @${updateUserToBeFollowed?.firstName}`,
+    data: updateCurrentUser,
+  });
+});
+
+// @desc PUT unfollow the user
+// @route: /api/v1/users/unfollow/:id
+// @access: protected
+
+const unFollowUser = asyncHandler(async (req, res, next) => {
+  const userToBeUnfollowed = req.params.id;
+  const userFound = await User.findById(userToBeUnfollowed);
+  if (!userFound) {
+    next(new ErrorHandler(`User is not found with this id: ${userToBeUnfollowed}`, 404));
+    return;
+  }
+
+  const currentUserId = req.user.id;
+  if (currentUserId === userToBeUnfollowed) {
+    next(new ErrorHandler(`You cannot unfollow yourself`, 400));
+    return;
+  }
+
+  // Check if the user to be unfollowed is already unfollowed
+  const isAlreadyUnfollowed = userFound?.followers?.includes(currentUserId);
+  if (!isAlreadyUnfollowed) {
+    next(new ErrorHandler(`You have not followed this user`, 400));
+  }
+
+  // userFound.followers = userFound.followers.filter((id) => id.toString() !== currentUserId.toString());
+  // await userFound.save({ validateBeforeSave: false });
+
+  // Remove the user to be unfollowed from the following field/list of the current user
+  const updateCurrentUser = await User.findByIdAndUpdate(
+    currentUserId,
+    { $pull: { following: userToBeUnfollowed } },
+    { new: true }
+  );
+
+  // Remove the current user from the followers field/list of the user to be unfollowed
+  const updateUserToBeUnfollowed = await User.findByIdAndUpdate(
+    userToBeUnfollowed,
+    { $pull: { followers: currentUserId } },
+    { new: true }
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: `You have successfully un-followed @${updateUserToBeUnfollowed?.firstName}`,
+    data: updateCurrentUser,
+  });
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
@@ -471,4 +569,6 @@ export {
   blockUser,
   unblockUser,
   profileViewedBy,
+  followUser,
+  unFollowUser,
 };
