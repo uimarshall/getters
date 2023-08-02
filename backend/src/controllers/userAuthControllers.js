@@ -455,20 +455,18 @@ const followUser = asyncHandler(async (req, res, next) => {
   const userToBeFollowed = req.params.id;
   const userFound = await User.findById(userToBeFollowed);
   if (!userFound) {
-    next(new ErrorHandler(`User is not found with this id: ${userToBeFollowed}`, 404));
-    return;
+    return next(new ErrorHandler(`User is not found with this id: ${userToBeFollowed}`, 404));
   }
 
   const currentUserId = req.user.id;
   if (currentUserId.toString() === userToBeFollowed.toString()) {
-    next(new ErrorHandler(`You cannot follow yourself`, 400));
-    return;
+    return next(new ErrorHandler(`You cannot follow yourself`, 400));
   }
 
   // Check if the user to be followed is already followed
   const isAlreadyFollowed = userFound?.followers?.includes(currentUserId);
   if (isAlreadyFollowed) {
-    next(new ErrorHandler(`You have already followed this user`, 400));
+    return next(new ErrorHandler(`You have already followed this user`, 400));
   }
 
   // userFound.followers.push(currentUserId);
@@ -490,7 +488,7 @@ const followUser = asyncHandler(async (req, res, next) => {
     },
     { new: true }
   );
-  res.status(StatusCodes.OK).json({
+  return res.status(StatusCodes.OK).json({
     success: true,
     message: `You have successfully followed @${updateUserToBeFollowed?.firstName}`,
     data: updateCurrentUser,
@@ -505,20 +503,18 @@ const unFollowUser = asyncHandler(async (req, res, next) => {
   const userToBeUnfollowed = req.params.id;
   const userFound = await User.findById(userToBeUnfollowed);
   if (!userFound) {
-    next(new ErrorHandler(`User is not found with this id: ${userToBeUnfollowed}`, 404));
-    return;
+    return next(new ErrorHandler(`User is not found with this id: ${userToBeUnfollowed}`, 404));
   }
 
   const currentUserId = req.user.id;
   if (currentUserId === userToBeUnfollowed) {
-    next(new ErrorHandler(`You cannot unfollow yourself`, 400));
-    return;
+    return next(new ErrorHandler(`You cannot unfollow yourself`, 400));
   }
 
   // Check if the user to be unfollowed is already unfollowed
   const isAlreadyUnfollowed = userFound?.followers?.includes(currentUserId);
   if (!isAlreadyUnfollowed) {
-    next(new ErrorHandler(`You have not followed this user`, 400));
+    return next(new ErrorHandler(`You have not followed this user`, 400));
   }
 
   // userFound.followers = userFound.followers.filter((id) => id.toString() !== currentUserId.toString());
@@ -538,7 +534,7 @@ const unFollowUser = asyncHandler(async (req, res, next) => {
     { new: true }
   );
 
-  res.status(StatusCodes.OK).json({
+  return res.status(StatusCodes.OK).json({
     success: true,
     message: `You have successfully un-followed @${updateUserToBeUnfollowed?.firstName}`,
     data: updateCurrentUser,
