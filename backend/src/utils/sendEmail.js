@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import ErrorHandler from './errorHandler';
+import ErrorHandler from './errorHandler.js';
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
@@ -28,8 +28,8 @@ const sendEmailByGmail = async (to, resetToken) => {
       port: 587,
       secure: false, // use SSL instead of TLS for backwards compatibility with old browsers (https://github.com/Facebook /nodemailer/issues/906) or port number 465.
       auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD,
+        user: process.env.SMTP_EMAIL_SENDER_GMAIL,
+        pass: process.env.SMTP_EMAIL_SENDER_PASSWORD,
       },
     });
 
