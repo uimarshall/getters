@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/user.js';
 import ErrorHandler from '../utils/errorHandler.js';
-import sendEmail from '../utils/sendEmail.js';
+import { sendEmail } from '../utils/sendEmail.js';
 import logger from '../logger/logger.js';
 
 // @desc Register a new user

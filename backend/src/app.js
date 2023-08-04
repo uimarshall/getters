@@ -10,6 +10,7 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import tagRoutes from './routes/tagRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
+// import { sendEmailByGmail } from './utils/sendEmail.js';
 
 // Load the environment variables
 dotenv.config({ path: 'backend/src/config/.env' });
@@ -35,6 +36,7 @@ app.use('/api/v1/comments', commentRoutes);
 // Custom Error Middleware to handle error
 app.use(notFound);
 app.use(errorMiddleware);
+// sendEmailByGmail('uimarshall@gmail.com', 'Checkout your project');
 
 app.get('/', (req, res) => {
   res.send('Express + Linting + found solution, better');
