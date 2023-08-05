@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/user.js';
 import ErrorHandler from '../utils/errorHandler.js';
-import { sendEmail } from '../utils/sendEmail.js';
+import { sendEmail, sendEmailByGmail } from '../utils/sendEmail.js';
 import logger from '../logger/logger.js';
 
 // @desc Register a new user
@@ -94,13 +94,13 @@ const logoutUser = asyncHandler(async (req, res, next) => {
 
 // @desc: Forgot Password
 // @route: /api/v1/users/password/forgot
-// @access: protected
+// @access: public
 
 const forgotPassword = asyncHandler(async (req, res, next) => {
   const { email } = req.body;
   const userFound = await User.findOne({ email });
   if (!userFound) {
-    next(new ErrorHandler(`User with this email: ${email} not found`, 404));
+    next(new ErrorHandler(`User with this email: <${email}> not found`, 404));
     return;
   }
   // Get reset token
@@ -120,14 +120,16 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
   const message = `Your password reset token is as follows:\n\n${resetUrl}\n\nIf you have not requested this email, then ignore it!`;
 
   try {
-    await sendEmail({
-      email: userFound.email,
-      subject: 'GetHub Password Recovery',
-      message,
-    });
+    // await sendEmail({
+    //   email: userFound.email,
+    //   subject: 'GetHub Password Recovery',
+    //   message,
+    // });
+    await sendEmailByGmail(userFound.email, resetToken);
     res.status(200).json({
       success: true,
       message: `Email sent to: ${userFound.email}`,
+      resetToken,
     });
   } catch (error) {
     userFound.resetPasswordToken = undefined;
@@ -140,14 +142,14 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
 
 // @desc: Password Reset
 // @route: /api/v1/users/password/reset/:token
-// @access: protected
+// @access: public
 
 const resetPassword = asyncHandler(async (req, res, next) => {
-  // Hash url token
-  const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  // Hash url token received from frontend url params
+  const hashedPasswordTokenFromUrl = crypto.createHash('sha256').update(req.params.token).digest('hex');
   // Compare the hashed token to the one stored in the Db
   const userFound = await User.findOne({
-    resetPasswordToken,
+    resetPasswordToken: hashedPasswordTokenFromUrl,
     resetPasswordExpire: { $gt: Date.now() },
   });
 
@@ -180,8 +182,11 @@ const resetPassword = asyncHandler(async (req, res, next) => {
 const getUserProfile = asyncHandler(async (req, res, next) => {
   // console.log(req.user);
   const userFound = await User.findById(req.user.id);
+  if (!userFound) {
+    return next(new ErrorHandler(`User is not found with this id: ${req.user.id}`));
+  }
 
-  res.status(StatusCodes.OK).json({
+  return res.status(StatusCodes.OK).json({
     success: true,
     data: userFound,
   });
