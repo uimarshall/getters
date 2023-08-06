@@ -9,7 +9,14 @@ import ErrorHandler from '../utils/errorHandler.js';
 import { EmailSender, sendEmail, sendEmailByGmail } from '../utils/sendEmail.js';
 import logger from '../logger/logger.js';
 import smtpOptions from '../utils/smtpOptions.js';
-import { EMAIL_HTML_TEMPLATE, forgotPasswordHtmlTitle, forgotPasswordMessage, headerText } from '../lib/constants.js';
+import {
+  EMAIL_HTML_TEMPLATE,
+  accountVerificationHtmlTitle,
+  accountVerificationMessage,
+  forgotPasswordHtmlTitle,
+  forgotPasswordMessage,
+  headerText,
+} from '../lib/constants.js';
 
 // @desc Register a new user
 // @route POST /api/v1/users/register
@@ -553,6 +560,51 @@ const unFollowUser = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc Account verification
+// @route: POST /api/v1/users/auth/verify-account
+// @access: private
+
+const accountVerification = asyncHandler(async (req, res, next) => {
+  // fetch the current login user
+  const userFound = await User.findById(req.user.id);
+  if (!userFound) {
+    next(new ErrorHandler(`User is not found with this id: ${req.user.id}`));
+    return;
+  }
+  // get reset token
+  const verificationToken = await userFound.getAccountVerificationToken();
+
+  // save user
+
+  await userFound.save({ validateBeforeSave: false });
+  // send email
+
+  // Message to user
+
+  const emailMessage = EMAIL_HTML_TEMPLATE(
+    accountVerificationHtmlTitle,
+    accountVerificationMessage(verificationToken),
+    headerText
+  );
+  const from = `${process.env.SMTP_EMAIL_SENDER_NAME} <${process.env.SMTP_EMAIL_SENDER}>`;
+
+  try {
+    const sendEmailByGmail = new EmailSender(smtpOptions);
+    await sendEmailByGmail.sendEmail(from, userFound.email, 'GetHub Account Verification', emailMessage);
+    res.status(200).json({
+      success: true,
+      message: `Account Verification Email sent to: ${userFound.email}`,
+      verificationToken,
+    });
+  } catch (error) {
+    userFound.resetPasswordToken = undefined;
+    userFound.resetPasswordExpire = undefined;
+    // We cannot save to db if error
+    await userFound.save({ validateBeforeSave: false });
+    next(new ErrorHandler(error.message, 500));
+  }
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
@@ -579,4 +631,5 @@ export {
   profileViewedBy,
   followUser,
   unFollowUser,
+  accountVerification,
 };

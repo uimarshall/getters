@@ -214,7 +214,7 @@ userSchema.methods.getAccountVerificationToken = function () {
   this.accountVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
 
   // Set token expire time in seconds(30mins)
-  this.accountVerificationExpire = Date.now() + 24 * 60 * 60 * 1000;
+  this.accountVerificationExpire = Date.now() + 60 * 60 * 1000;
   return verificationToken;
 };
 

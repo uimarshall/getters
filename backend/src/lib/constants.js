@@ -1,16 +1,16 @@
 const forgotPasswordHtmlTitle = 'Forgot Password Email Template';
 const accountVerificationHtmlTitle = 'Account Verification Email Template';
 const headerText = 'GETHUB';
-const accountVerificationMessage = `Thank you for signing up to Gethub.
+const accountVerificationMessage = (token) => `<h3>Thank you for signing up to Gethub</h3>.
 
-In order to enjoy your favorites articles and also write blog posts, you need to verify your email by clicking on the following link/button:
+<p>In order to enjoy your favorites articles and also write blog posts, you need to verify your email by clicking on the following link/button:</p>
 
-Click here to confirm your email.
+<p><a href='${process.env.CLIENT_URL}/verify-account/${token}'>Click here to confirm your email.</a></p>
 
-If you did not sign up, you can ignore this email or reply to us if you want us to block your address from further signup attempts.
+<p>If you did not sign up, you can ignore this email or reply to us if you want us to block your address from further signup attempts.</p>
 
-Cheers,
-— Marshall Akpan, editor at Gethub`;
+<h3>Cheers,</h3>
+<span>— Marshall Akpan, editor at Gethub</span>`;
 
 const forgotPasswordMessage = (
   token
