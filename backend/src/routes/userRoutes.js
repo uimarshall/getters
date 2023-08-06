@@ -20,6 +20,8 @@ import {
   profileViewedBy,
   followUser,
   unFollowUser,
+  accountVerificationEmailHandler,
+  verifyAccount,
 } from '../controllers/userAuthControllers.js';
 import { requireAuthentication, requireAdminRole } from '../middlewares/authMiddleware.js';
 
@@ -72,6 +74,12 @@ router.put('/following/:id', requireAuthentication, followUser);
 
 // Unfollowing a user
 router.put('/un-following/:id', requireAuthentication, unFollowUser);
+
+// Account verification email
+router.post('/auth/account-verification', requireAuthentication, accountVerificationEmailHandler);
+
+// Actual account verification
+router.put('/auth/account-verification/:token', requireAuthentication, verifyAccount);
 
 router.get('/auth', requireAuthentication, requireAdminRole, protectedUser);
 

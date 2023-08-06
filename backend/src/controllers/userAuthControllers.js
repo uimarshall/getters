@@ -2,11 +2,21 @@ import asyncHandler from 'express-async-handler';
 import { nanoid } from 'nanoid';
 import { StatusCodes } from 'http-status-codes';
 import crypto from 'crypto';
+
 import generateToken from '../utils/generateToken.js';
 import User from '../models/user.js';
 import ErrorHandler from '../utils/errorHandler.js';
-import { sendEmail, sendEmailByGmail } from '../utils/sendEmail.js';
+import { EmailSender, sendEmail, sendEmailByGmail } from '../utils/sendEmail.js';
 import logger from '../logger/logger.js';
+import smtpOptions from '../utils/smtpOptions.js';
+import {
+  EMAIL_HTML_TEMPLATE,
+  accountVerificationHtmlTitle,
+  accountVerificationMessage,
+  forgotPasswordHtmlTitle,
+  forgotPasswordMessage,
+  headerText,
+} from '../lib/constants.js';
 
 // @desc Register a new user
 // @route POST /api/v1/users/register
@@ -118,6 +128,8 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
 
   // Message to user
   const message = `Your password reset token is as follows:\n\n${resetUrl}\n\nIf you have not requested this email, then ignore it!`;
+  const emailMessage = EMAIL_HTML_TEMPLATE(forgotPasswordHtmlTitle, forgotPasswordMessage(resetToken), headerText);
+  const from = `${process.env.SMTP_EMAIL_SENDER_NAME} <${process.env.SMTP_EMAIL_SENDER}>`;
 
   try {
     // await sendEmail({
@@ -125,7 +137,9 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
     //   subject: 'GetHub Password Recovery',
     //   message,
     // });
-    await sendEmailByGmail(userFound.email, resetToken);
+    // await sendEmailByGmail(userFound.email, resetToken);
+    const sendEmailByGmail = new EmailSender(smtpOptions);
+    await sendEmailByGmail.sendEmail(from, userFound.email, 'GetHub Password Recovery', emailMessage);
     res.status(200).json({
       success: true,
       message: `Email sent to: ${userFound.email}`,
@@ -546,6 +560,90 @@ const unFollowUser = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc Account verification Email handler
+// @route: POST /api/v1/users/auth/verify-account
+// @access: private
+
+const accountVerificationEmailHandler = asyncHandler(async (req, res, next) => {
+  // fetch the current login user
+  const userFound = await User.findById(req.user.id);
+  if (!userFound) {
+    next(new ErrorHandler(`User is not found with this id: ${req.user.id}`, 404));
+    return;
+  }
+  // get reset token
+  const verificationToken = await userFound.getAccountVerificationToken();
+
+  // save user
+
+  await userFound.save({ validateBeforeSave: false });
+  // send email
+
+  // Message to user
+
+  const emailMessage = EMAIL_HTML_TEMPLATE(
+    accountVerificationHtmlTitle,
+    accountVerificationMessage(verificationToken),
+    headerText
+  );
+  const from = `${process.env.SMTP_EMAIL_SENDER_NAME} <${process.env.SMTP_EMAIL_SENDER}>`;
+
+  try {
+    const sendEmailByGmail = new EmailSender(smtpOptions);
+    await sendEmailByGmail.sendEmail(from, userFound.email, 'GetHub Account Verification', emailMessage);
+    res.status(200).json({
+      success: true,
+      message: `Account Verification Email sent to: ${userFound.email}`,
+      verificationToken,
+    });
+  } catch (error) {
+    userFound.resetPasswordToken = undefined;
+    userFound.resetPasswordExpire = undefined;
+    // We cannot save to db if error
+    await userFound.save({ validateBeforeSave: false });
+    next(new ErrorHandler(error.message, 500));
+  }
+});
+
+// @desc Verify account
+// @route: /api/v1/users/auth/verify-account/:token
+// @access: private
+
+const verifyAccount = asyncHandler(async (req, res, next) => {
+  // Hash url token received from frontend url params
+  const hashedVerificationTokenFromUrl = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  // Compare the hashed token to the one stored in the Db
+
+  // const isTokenMatched = userFound?.accountVerificationToken === hashedVerificationTokenFromUrl;
+  // if (!isTokenMatched) {
+  //   return next(new ErrorHandler('Invalid account verification token', 400));
+  // }
+
+  const userFound = await User.findOne({
+    accountVerificationToken: hashedVerificationTokenFromUrl,
+    accountVerificationExpire: { $gt: Date.now() },
+  });
+
+  if (!userFound) {
+    next(new ErrorHandler('Account verification token is invalid or has expired', 400));
+    return;
+  }
+
+  //  If user found - Setup new password
+  userFound.isVerified = true;
+  // Destroy the token by setting it to undefined
+  userFound.accountVerificationToken = undefined;
+  userFound.accountVerificationExpire = undefined;
+
+  // re-save the user account
+
+  await userFound.save();
+
+  // Send token again
+  // res.message = 'Account verified successfully!';
+  generateToken(userFound, 200, res); // we have to sen the token again because we are logging in the user again
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
@@ -572,4 +670,6 @@ export {
   profileViewedBy,
   followUser,
   unFollowUser,
+  accountVerificationEmailHandler,
+  verifyAccount,
 };
