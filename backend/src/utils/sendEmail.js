@@ -48,9 +48,9 @@ const sendEmailByGmail = async (to, resetToken) => {
       to,
       subject: 'GetHub Password Recovery',
       html: `<p>You are receiving this email because you (or someone else) have requested the reset of a password. </p>
-    <p>Please click on the following link, or paste this into your browser to complete the process within half an hour of receiving it: </p> 
-    <p>http://localhost:3000/reset-password/${resetToken}</p>
-    <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>`,
+             <p>Please click on the following link, or paste this into your browser to complete the process within half an hour of receiving it: </p> 
+             <p>${process.env.CLIENT_URL}/reset-password/${resetToken}</p>
+              <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>`,
     };
     // Send the actual email to the user
     await transporter.sendMail(message);
@@ -59,4 +59,16 @@ const sendEmailByGmail = async (to, resetToken) => {
   }
 };
 
-export { sendEmail, sendEmailByGmail };
+class EmailSender {
+  // Initialization with SMTP options
+  constructor(smtpOptions) {
+    this.transporter = nodemailer.createTransport(smtpOptions);
+  }
+
+  // Method for sending emails
+  async sendEmail(from, to, subject, html) {
+    await this.transporter.sendMail({ from, to, subject, html });
+  }
+}
+
+export { sendEmail, sendEmailByGmail, EmailSender };

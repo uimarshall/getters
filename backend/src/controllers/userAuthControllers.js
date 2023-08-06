@@ -2,11 +2,14 @@ import asyncHandler from 'express-async-handler';
 import { nanoid } from 'nanoid';
 import { StatusCodes } from 'http-status-codes';
 import crypto from 'crypto';
+
 import generateToken from '../utils/generateToken.js';
 import User from '../models/user.js';
 import ErrorHandler from '../utils/errorHandler.js';
-import { sendEmail, sendEmailByGmail } from '../utils/sendEmail.js';
+import { EmailSender, sendEmail, sendEmailByGmail } from '../utils/sendEmail.js';
 import logger from '../logger/logger.js';
+import smtpOptions from '../utils/smtpOptions.js';
+import { EMAIL_HTML_TEMPLATE, forgotPasswordHtmlTitle, forgotPasswordMessage, headerText } from '../lib/constants.js';
 
 // @desc Register a new user
 // @route POST /api/v1/users/register
@@ -118,6 +121,8 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
 
   // Message to user
   const message = `Your password reset token is as follows:\n\n${resetUrl}\n\nIf you have not requested this email, then ignore it!`;
+  const emailMessage = EMAIL_HTML_TEMPLATE(forgotPasswordHtmlTitle, forgotPasswordMessage(resetToken), headerText);
+  const from = `${process.env.SMTP_EMAIL_SENDER_NAME} <${process.env.SMTP_EMAIL_SENDER}>`;
 
   try {
     // await sendEmail({
@@ -125,7 +130,9 @@ const forgotPassword = asyncHandler(async (req, res, next) => {
     //   subject: 'GetHub Password Recovery',
     //   message,
     // });
-    await sendEmailByGmail(userFound.email, resetToken);
+    // await sendEmailByGmail(userFound.email, resetToken);
+    const sendEmailByGmail = new EmailSender(smtpOptions);
+    await sendEmailByGmail.sendEmail(from, userFound.email, 'GetHub Password Recovery', emailMessage);
     res.status(200).json({
       success: true,
       message: `Email sent to: ${userFound.email}`,

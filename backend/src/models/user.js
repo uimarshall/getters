@@ -142,7 +142,7 @@ const userSchema = new Schema(
       default: Date.now,
     },
     isVerified: {
-      type: Boolean,
+      type: String,
       default: false,
     },
     notificationPreferences: {
@@ -201,6 +201,21 @@ userSchema.methods.getResetPasswordToken = function () {
   // Set token expire time in seconds(30mins)
   this.resetPasswordExpire = Date.now() + 30 * 60 * 1000;
   return resetToken;
+};
+
+// Account Verification token
+
+userSchema.methods.getAccountVerificationToken = function () {
+  // Generate token
+  const verificationToken = crypto.randomBytes(20).toString('hex');
+
+  // Hash/encrypt token and set to resetPasswordToken
+  // This is saved in the database
+  this.accountVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
+  // Set token expire time in seconds(30mins)
+  this.accountVerificationExpire = Date.now() + 24 * 60 * 60 * 1000;
+  return verificationToken;
 };
 
 const User = model('User', userSchema);
