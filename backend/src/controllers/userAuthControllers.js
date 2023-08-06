@@ -560,15 +560,15 @@ const unFollowUser = asyncHandler(async (req, res, next) => {
   });
 });
 
-// @desc Account verification
+// @desc Account verification Email handler
 // @route: POST /api/v1/users/auth/verify-account
 // @access: private
 
-const accountVerification = asyncHandler(async (req, res, next) => {
+const accountVerificationEmailHandler = asyncHandler(async (req, res, next) => {
   // fetch the current login user
   const userFound = await User.findById(req.user.id);
   if (!userFound) {
-    next(new ErrorHandler(`User is not found with this id: ${req.user.id}`));
+    next(new ErrorHandler(`User is not found with this id: ${req.user.id}`, 404));
     return;
   }
   // get reset token
@@ -605,6 +605,45 @@ const accountVerification = asyncHandler(async (req, res, next) => {
   }
 });
 
+// @desc Verify account
+// @route: /api/v1/users/auth/verify-account/:token
+// @access: private
+
+const verifyAccount = asyncHandler(async (req, res, next) => {
+  // Hash url token received from frontend url params
+  const hashedVerificationTokenFromUrl = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  // Compare the hashed token to the one stored in the Db
+
+  // const isTokenMatched = userFound?.accountVerificationToken === hashedVerificationTokenFromUrl;
+  // if (!isTokenMatched) {
+  //   return next(new ErrorHandler('Invalid account verification token', 400));
+  // }
+
+  const userFound = await User.findOne({
+    accountVerificationToken: hashedVerificationTokenFromUrl,
+    accountVerificationExpire: { $gt: Date.now() },
+  });
+
+  if (!userFound) {
+    next(new ErrorHandler('Account verification token is invalid or has expired', 400));
+    return;
+  }
+
+  //  If user found - Setup new password
+  userFound.isVerified = true;
+  // Destroy the token by setting it to undefined
+  userFound.accountVerificationToken = undefined;
+  userFound.accountVerificationExpire = undefined;
+
+  // re-save the user account
+
+  await userFound.save();
+
+  // Send token again
+  // res.message = 'Account verified successfully!';
+  generateToken(userFound, 200, res); // we have to sen the token again because we are logging in the user again
+});
+
 // test user protected routes
 
 const protectedUser = asyncHandler(async (req, res) => {
@@ -631,5 +670,6 @@ export {
   profileViewedBy,
   followUser,
   unFollowUser,
-  accountVerification,
+  accountVerificationEmailHandler,
+  verifyAccount,
 };
