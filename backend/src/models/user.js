@@ -142,7 +142,7 @@ const userSchema = new Schema(
       default: Date.now,
     },
     isVerified: {
-      type: String,
+      type: Boolean,
       default: false,
     },
     notificationPreferences: {
