@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable import/no-unresolved */
 import formidable from 'formidable';
 
@@ -85,7 +86,7 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
       .populate('tags', '_id name slug')
       .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
 
-      .select('_id title slug excerpt categories tags postedBy createdAt updatedAt');
+      .select('_id title slug excerpt categories tags postedBy createdAt updatedAt likes disLikes');
     return res.status(StatusCodes.OK).json({
       success: true,
       message: 'Blogs fetched successfully',
@@ -242,6 +243,75 @@ const deleteBlogByOwner = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc: Like a blog post
+// @route: PUT /api/v1/blogs/likes/:postId
+// @access: private
+
+const likeBlogPost = asyncHandler(async (req, res, next) => {
+  // Get id of the post
+  const { postId } = req.params;
+  const blog = await Blog.findById(postId);
+  if (!blog) {
+    return next(new ErrorHandler(`Blog post not found`, StatusCodes.NOT_FOUND));
+  }
+
+  // Get id of the user - which is currently logged in
+  const userId = req.user._id;
+  // if (blog.likes.includes(userId)) {
+  //   return next(new ErrorHandler('You already liked this blog', StatusCodes.BAD_REQUEST));
+  // }
+  // await Blog.findByIdAndUpdate(postId, { $push: { likes: userId } }, { new: true });
+
+  // Or use $addToSet
+  await Blog.findByIdAndUpdate(postId, { $addToSet: { likes: userId } }, { new: true });
+
+  // Remove the user from the dislikes array if he/she is there
+  blog.disLikes = blog.disLikes.filter((dislike) => dislike.toString() !== userId.toString());
+  // resave the blog post
+  const savedBlog = await blog.save();
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blog liked successfully',
+    savedBlog,
+  });
+});
+
+// Dislike a blog post
+// @route: PUT /api/v1/blogs/dislikes/:postId
+// @access: private
+
+const dislikeBlogPost = asyncHandler(async (req, res, next) => {
+  // Get id of the post
+  const { postId } = req.params;
+  const blog = await Blog.findById(postId);
+  if (!blog) {
+    return next(new ErrorHandler(`Blog post not found`, StatusCodes.NOT_FOUND));
+  }
+
+  // Get id of the user - which is currently logged in
+  const userId = req.user._id;
+  // if (blog.disLikes.includes(userId)) {
+  //   return next(new ErrorHandler('You already disliked this blog', StatusCodes.BAD_REQUEST));
+  // }
+  // await Blog.findByIdAndUpdate(postId, { $push: { disLikes: userId } }, { new: true });
+
+  // Or use $addToSet
+  await Blog.findByIdAndUpdate(postId, { $addToSet: { disLikes: userId } }, { new: true });
+
+  // Remove the user from the likes array if he/she is there
+  blog.likes = blog.likes.filter((like) => like.toString() !== userId.toString());
+
+  // re-save the blog post
+  const savedBlog = await blog.save();
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blog disliked successfully',
+    savedBlog,
+  });
+});
+
 export {
   createBlog,
   getAllBlogs,
@@ -250,4 +320,6 @@ export {
   deleteBlog,
   getAllBlogsCategoriesAndTags,
   deleteBlogByOwner,
+  likeBlogPost,
+  dislikeBlogPost,
 };
