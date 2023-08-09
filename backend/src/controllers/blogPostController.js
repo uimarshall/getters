@@ -312,6 +312,37 @@ const dislikeBlogPost = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Clappings for a blog post
+// @route: PUT /api/v1/blogs/claps/:postId
+// @access: private
+
+const clapBlogPost = asyncHandler(async (req, res, next) => {
+  // Get id of the post
+  const { postId } = req.params;
+  const blog = await Blog.findById(postId);
+  if (!blog) {
+    return next(new ErrorHandler(`Blog post not found`, StatusCodes.NOT_FOUND));
+  }
+
+  // Get id of the user - which is currently logged in
+  const userId = req.user._id;
+  if (blog.claps.includes(userId)) {
+    return next(new ErrorHandler('You already clapped for this blog', StatusCodes.BAD_REQUEST));
+  }
+
+  // The creator of this post should not be able to clap for his/her own post
+  if (blog.author.toString() === userId.toString()) {
+    return next(new ErrorHandler('You cannot clap for your own blog', StatusCodes.BAD_REQUEST));
+  }
+
+  // await Blog.findByIdAndUpdate(postId, { $push: { claps: userId } }, { new: true });
+  await Blog.findByIdAndUpdate(postId, { $inc: { claps: 1 } }, { new: true });
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blog clapped successfully',
+  });
+});
 export {
   createBlog,
   getAllBlogs,
@@ -322,4 +353,5 @@ export {
   deleteBlogByOwner,
   likeBlogPost,
   dislikeBlogPost,
+  clapBlogPost,
 };

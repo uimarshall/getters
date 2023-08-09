@@ -10,6 +10,7 @@ import {
   deleteBlogByOwner,
   likeBlogPost,
   dislikeBlogPost,
+  clapBlogPost,
 } from '../controllers/blogPostController.js';
 import { requireAuthentication } from '../middlewares/authMiddleware.js';
 import accountVerificationHandler from '../middlewares/accountVerificationMiddleware.js';
@@ -29,5 +30,8 @@ router.put('/likes/:postId', requireAuthentication, accountVerificationHandler, 
 
 // Dislikes a post
 router.put('/dislikes/:postId', requireAuthentication, accountVerificationHandler, dislikeBlogPost);
+
+// clap for a post
+router.post('/clap/:postId', requireAuthentication, clapBlogPost);
 
 export default router;
