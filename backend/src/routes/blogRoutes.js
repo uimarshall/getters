@@ -11,6 +11,7 @@ import {
   likeBlogPost,
   dislikeBlogPost,
   clapBlogPost,
+  schedulePublication,
 } from '../controllers/blogPostController.js';
 import { requireAuthentication } from '../middlewares/authMiddleware.js';
 import accountVerificationHandler from '../middlewares/accountVerificationMiddleware.js';
@@ -32,6 +33,9 @@ router.put('/likes/:postId', requireAuthentication, accountVerificationHandler, 
 router.put('/dislikes/:postId', requireAuthentication, accountVerificationHandler, dislikeBlogPost);
 
 // clap for a post
-router.post('/clap/:postId', requireAuthentication, clapBlogPost);
+router.post('/claps/:postId', requireAuthentication, clapBlogPost);
+
+// publication date of the post
+router.put('/schedule-publication/:postId', requireAuthentication, schedulePublication);
 
 export default router;

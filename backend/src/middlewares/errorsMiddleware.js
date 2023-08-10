@@ -31,6 +31,10 @@ const errorMiddleware = (er, req, res, next) => {
       const message = `Resource not found. Invalid ${err.path}:${err.value}`;
       error = new ErrorHandler(message, 400);
     }
+    if (err.name === 'CastError' && err.path === 'schedulePublications') {
+      const message = `Please enter the correct date format:  dd-mm-yyyy`;
+      error = new ErrorHandler(message, 400);
+    }
 
     // Handling Mongoose validation errors
     // This error occurs for fields that are required in the db schema.

@@ -323,19 +323,18 @@ const clapBlogPost = asyncHandler(async (req, res, next) => {
   if (!blog) {
     return next(new ErrorHandler(`Blog post not found`, StatusCodes.NOT_FOUND));
   }
-
   // Get id of the user - which is currently logged in
   const userId = req.user._id;
-  if (blog.claps.includes(userId)) {
+  // The creator of this post should not be able to clap for his/her own post
+  if (blog.author.toString() === userId.toString()) {
+    return next(new ErrorHandler('You cannot clap for your own blog post', StatusCodes.BAD_REQUEST));
+  }
+
+  if (blog.clappings.includes(userId)) {
     return next(new ErrorHandler('You already clapped for this blog', StatusCodes.BAD_REQUEST));
   }
 
-  // The creator of this post should not be able to clap for his/her own post
-  if (blog.author.toString() === userId.toString()) {
-    return next(new ErrorHandler('You cannot clap for your own blog', StatusCodes.BAD_REQUEST));
-  }
-
-  // await Blog.findByIdAndUpdate(postId, { $push: { claps: userId } }, { new: true });
+  await Blog.findByIdAndUpdate(postId, { $push: { clappings: userId } }, { new: true });
   await Blog.findByIdAndUpdate(postId, { $inc: { claps: 1 } }, { new: true });
 
   return res.status(StatusCodes.OK).json({
@@ -343,6 +342,61 @@ const clapBlogPost = asyncHandler(async (req, res, next) => {
     message: 'Blog clapped successfully',
   });
 });
+
+// Schedule a new blog post
+// @route: PUT /api/v1/blogs/schedule-publication/:postId
+// @access: private
+
+const schedulePublication = asyncHandler(async (req, res, next) => {
+  const { postId } = req.params;
+  const { schedulePublications } = req.body;
+  const blog = await Blog.findById(postId);
+  if (!schedulePublications) {
+    return next(new ErrorHandler('Please enter a date to schedule this blog post', StatusCodes.BAD_REQUEST));
+  }
+  if (!blog) {
+    return next(new ErrorHandler(`Blog post not found`, StatusCodes.NOT_FOUND));
+  }
+
+  // Get id of the user - which is currently logged in
+  const userId = req.user._id;
+  // Check if the scheduler/currently logged in user is the author of the post
+  if (blog.author.toString() !== userId.toString()) {
+    return next(new ErrorHandler('You are not authorized to schedule this blog', StatusCodes.UNAUTHORIZED));
+  }
+
+  // check if the publication date is in the past
+  const intendedDateToPublish = new Date(schedulePublications);
+  const currentDate = new Date();
+  if (intendedDateToPublish < currentDate) {
+    return next(new ErrorHandler('Please enter a valid date in the present', StatusCodes.BAD_REQUEST));
+  }
+
+  // check if the publication has already been published
+  if (blog.schedulePublications) {
+    return next(new ErrorHandler('This blog post has already been published', StatusCodes.BAD_REQUEST));
+  }
+
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    const formattedDate = `${year}-${month}-${day}`;
+    return formattedDate;
+  };
+
+  blog.schedulePublications = formatDate(intendedDateToPublish);
+  await blog.save();
+  const publicationDate = blog.schedulePublications;
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blog post scheduled successfully',
+    publicationDate,
+  });
+});
+
 export {
   createBlog,
   getAllBlogs,
@@ -354,4 +408,5 @@ export {
   likeBlogPost,
   dislikeBlogPost,
   clapBlogPost,
+  schedulePublication,
 };
