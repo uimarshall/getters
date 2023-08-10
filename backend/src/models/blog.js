@@ -44,6 +44,7 @@ const blogSchema = new Schema(
       type: Number,
       default: 0,
     },
+    clappings: [{ type: ObjectId, ref: 'User' }],
     categories: [{ type: ObjectId, ref: 'Category', required: [true, 'Post category is required'] }],
     tags: [{ type: ObjectId, ref: 'Tag', required: true }],
     author: {
