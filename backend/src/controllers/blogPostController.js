@@ -80,21 +80,24 @@ const createBlog = asyncHandler(async (req, res, next) => {
 // @route: /api/v1/blogs
 // @access: public
 const getAllBlogs = asyncHandler(async (req, res, next) => {
-  try {
-    const blogs = await Blog.find({})
-      .populate('categories', '_id name slug')
-      .populate('tags', '_id name slug')
-      .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
+  // Find all users who have blocked the current user/logged In user
+  const currentUser = req.user?._id;
+  const currentUserBlockedBy = await User.find({ blockedUsers: currentUser });
+  logger.debug(currentUserBlockedBy);
+  const currentUserBlockedById = currentUserBlockedBy.map((user) => user._id);
+  const blogs = await Blog.find({
+    author: { $nin: currentUserBlockedById }, // Only return blog post from users that have not blocked the current logged in user
+  })
+    .populate('categories', '_id name slug')
+    .populate('tags', '_id name slug')
+    .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
 
-      .select('_id title slug excerpt categories tags postedBy createdAt updatedAt likes disLikes');
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      message: 'Blogs fetched successfully',
-      data: blogs,
-    });
-  } catch (error) {
-    return next(new ErrorHandler(error.message, StatusCodes.INTERNAL_SERVER_ERROR));
-  }
+    .select('_id title slug excerpt categories tags postedBy createdAt updatedAt likes disLikes');
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blogs fetched successfully',
+    data: blogs,
+  });
 });
 
 // @desc: list all blog categories and tags
