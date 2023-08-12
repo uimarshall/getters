@@ -41,8 +41,33 @@ const createBlog = asyncHandler(async (req, res, next) => {
     return next(new ErrorHandler('At least one tag is required', StatusCodes.BAD_REQUEST));
   }
 
+  // Find all Categories
+  const allCategories = await Category.find({});
+  // Get category id
+  const categoryIds = allCategories.map((category) => category._id.toString());
+  logger.debug(categoryIds);
+  // Find all Tags
+  const allTags = await Tag.find({});
+  // Get tag id
+  const tagsIds = allTags.map((tag) => tag._id.toString());
+
+  // const categoriesFromDb = await Category.find({ _id: { $in: categories } });
+  // const tagsFromDb = Tag.find({ _id: { $in: tags } });
+
   const arrayOfCategories = categories && categories.split(',');
   const arrayOfTags = tags && tags.split(',');
+
+  // Find categories from req body not in categoriesFromDb
+  const categoriesNotFound = arrayOfCategories.filter((category) => !categoryIds.includes(category));
+  // Find tags from req body not in tagsFromDb
+  const tagsNotFound = arrayOfTags.filter((tag) => !tagsIds.includes(tag));
+  if (categoriesNotFound.length > 0) {
+    return next(new ErrorHandler('One or more categories do not exist', StatusCodes.BAD_REQUEST));
+  }
+
+  if (tagsNotFound.length > 0) {
+    return next(new ErrorHandler('One or more tags do not exist', StatusCodes.BAD_REQUEST));
+  }
 
   const blog = new Blog();
   blog.title = title;
@@ -80,21 +105,25 @@ const createBlog = asyncHandler(async (req, res, next) => {
 // @route: /api/v1/blogs
 // @access: public
 const getAllBlogs = asyncHandler(async (req, res, next) => {
-  try {
-    const blogs = await Blog.find({})
-      .populate('categories', '_id name slug')
-      .populate('tags', '_id name slug')
-      .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
+  // Find all users who have blocked the current user/logged In user
+  const currentUser = req.user?._id;
+  const currentUserBlockedBy = await User.find({ blockedUsers: currentUser });
 
-      .select('_id title slug excerpt categories tags postedBy createdAt updatedAt likes disLikes');
-    return res.status(StatusCodes.OK).json({
-      success: true,
-      message: 'Blogs fetched successfully',
-      data: blogs,
-    });
-  } catch (error) {
-    return next(new ErrorHandler(error.message, StatusCodes.INTERNAL_SERVER_ERROR));
-  }
+  const currentUserBlockedById = currentUserBlockedBy.map((user) => user._id);
+  logger.info(currentUserBlockedById);
+  const blogs = await Blog.find({
+    author: { $nin: currentUserBlockedById }, // Only return blog post from users that have not blocked the current logged in user
+  })
+    .populate('categories', '_id name slug')
+    .populate('tags', '_id name slug')
+    .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
+
+    .select('_id title slug excerpt categories tags postedBy createdAt updatedAt likes disLikes');
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Blogs fetched successfully',
+    data: blogs,
+  });
 });
 
 // @desc: list all blog categories and tags
