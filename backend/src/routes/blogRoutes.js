@@ -18,8 +18,8 @@ import accountVerificationHandler from '../middlewares/accountVerificationMiddle
 
 const router = Router();
 
-router.post('/', requireAuthentication, accountVerificationHandler, createBlog);
-router.get('/', getAllBlogs);
+router.post('/', requireAuthentication, createBlog);
+router.get('/', requireAuthentication, getAllBlogs);
 router.post('/blogs-categories-tags', getAllBlogsCategoriesAndTags);
 router.get('/:slug', getSingleBlog);
 router.put('/:slug', requireAuthentication, updateBlog);
