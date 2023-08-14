@@ -74,7 +74,12 @@ const blogSchema = new Schema(
       },
     ],
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    // enables 'populate' methods
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
 const Blog = model('Blog', blogSchema);

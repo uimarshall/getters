@@ -111,14 +111,28 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
 
   const currentUserBlockedById = currentUserBlockedBy.map((user) => user._id);
   logger.info(currentUserBlockedById);
+  // Get current time
+  const currentTime = new Date();
+  // Find all blogs that have been scheduled for publication
+
+  const scheduledBlogs = await Blog.find({ schedulePublications: { $lte: currentTime } });
+
+  // Find all blogs that have been scheduled for publication and have not been published
+  // const scheduledBlogsNotPublished = await Blog.find({
+  //   schedulePublications: { $lte: currentTime },
+  //   published: false,
+  // });
+
   const blogs = await Blog.find({
     author: { $nin: currentUserBlockedById }, // Only return blog post from users that have not blocked the current logged in user
+    $or: [{ schedulePublications: { $lte: currentTime } }, { schedulePublications: null }],
+    // Only include blogs that have been scheduled for publication and have not been published,
   })
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
 
-    .select('_id title slug excerpt categories tags postedBy createdAt updatedAt likes disLikes');
+    .select('_id title slug excerpt categories tags postedBy createdAt updatedAt likes disLikes schedulePublications');
   return res.status(StatusCodes.OK).json({
     success: true,
     message: 'Blogs fetched successfully',
