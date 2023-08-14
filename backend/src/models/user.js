@@ -68,7 +68,7 @@ const userSchema = new Schema(
     posts: [
       {
         type: [Schema.Types.ObjectId],
-        ref: 'Post',
+        ref: 'Blog',
       },
     ],
     postCount: {
@@ -162,7 +162,11 @@ const userSchema = new Schema(
     accountVerificationToken: String,
     accountVerificationExpire: Date,
   },
-  { timestamps: true }
+  {
+    timestamps: true, // enables 'populate' methods
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
 // Encrypt password before saving user to database

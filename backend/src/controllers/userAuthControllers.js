@@ -195,7 +195,26 @@ const resetPassword = asyncHandler(async (req, res, next) => {
 
 const getUserProfile = asyncHandler(async (req, res, next) => {
   // console.log(req.user);
-  const userFound = await User.findById(req.user.id);
+  const userFound = await User.findById(req.user.id)
+    .populate({
+      path: 'followers', // populate the followers field
+      model: 'User',
+      select: 'firstNname', // select the name and profilePic fields
+    })
+    .populate({
+      path: 'following',
+      model: 'User',
+      select: 'firstName',
+    })
+    .populate({
+      path: 'posts',
+      model: 'Blog',
+    })
+    .populate({
+      path: 'blockedUsers',
+      model: 'User',
+    })
+    .populate({ path: 'viewedBy', model: 'User' });
   if (!userFound) {
     return next(new ErrorHandler(`User is not found with this id: ${req.user.id}`));
   }
