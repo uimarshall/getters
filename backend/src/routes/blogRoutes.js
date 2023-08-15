@@ -15,10 +15,11 @@ import {
 } from '../controllers/blogPostController.js';
 import { requireAuthentication } from '../middlewares/authMiddleware.js';
 import accountVerificationHandler from '../middlewares/accountVerificationMiddleware.js';
+import fileUpload from '../utils/fileUploads.js';
 
 const router = Router();
 
-router.post('/', requireAuthentication, createBlog);
+router.post('/', requireAuthentication, fileUpload.single('file'), createBlog);
 router.get('/', requireAuthentication, getAllBlogs);
 router.post('/blogs-categories-tags', getAllBlogsCategoriesAndTags);
 router.get('/:slug', getSingleBlog);
