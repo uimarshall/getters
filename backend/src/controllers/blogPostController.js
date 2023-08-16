@@ -73,7 +73,7 @@ const createBlog = asyncHandler(async (req, res, next) => {
   const blog = new Blog();
   blog.title = title;
   blog.body = body;
-  blog.photo = req.file.photo;
+  blog.photo = req?.file?.path;
   blog.excerpt = stringTrim(body, 320, ' ', '...');
   blog.slug = slugify(title).toLowerCase();
   blog.metaTitle = `${title} | ${process.env.APP_NAME}`;
