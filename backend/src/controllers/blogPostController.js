@@ -21,6 +21,7 @@ import logger from '../logger/logger.js';
 // @route: /api/v1/blogs
 // @access: private
 const createBlog = asyncHandler(async (req, res, next) => {
+  logger.debug(req.file);
   const { title, body, categories, tags } = req.body;
 
   if (!title || !title.length) {
@@ -72,6 +73,7 @@ const createBlog = asyncHandler(async (req, res, next) => {
   const blog = new Blog();
   blog.title = title;
   blog.body = body;
+  blog.photo = req?.file?.path;
   blog.excerpt = stringTrim(body, 320, ' ', '...');
   blog.slug = slugify(title).toLowerCase();
   blog.metaTitle = `${title} | ${process.env.APP_NAME}`;

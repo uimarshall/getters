@@ -38,7 +38,8 @@ const blogSchema = new Schema(
     // },
     photo: {
       type: String,
-      default: 'https://via.placeholder.com/728x400.png?text=Visit+WhoAmI',
+      required: [true, 'Please enter blog photo'],
+      // default: 'https://via.placeholder.com/728x400.png?text=Visit+WhoAmI',
     },
     claps: {
       type: Number,
