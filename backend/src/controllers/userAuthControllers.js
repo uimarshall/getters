@@ -48,10 +48,11 @@ const registerUser = asyncHandler(async (req, res, next) => {
     username,
     profile,
     password,
-    profilePhoto: {
-      public_id: 'avatars/h2yrh8qucvejk139t8ro',
-      url: 'https://res.cloudinary.com/uimarshall/image/upload/v1625707364/avatars/h2yrh8qucvejk139t8ro.jpg',
-    },
+    // profilePhoto: {
+    //   public_id: 'avatars/h2yrh8qucvejk139t8ro',
+    //   url: 'https://res.cloudinary.com/uimarshall/image/upload/v1625707364/avatars/h2yrh8qucvejk139t8ro.jpg',
+    // },
+    profilePhoto: req?.file?.path,
     bio,
     location,
   });

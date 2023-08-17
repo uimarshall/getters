@@ -25,10 +25,12 @@ import {
 } from '../controllers/userAuthControllers.js';
 import { requireAuthentication, requireAdminRole } from '../middlewares/authMiddleware.js';
 
+import fileUpload from '../utils/fileUploads.js';
+
 const router = Router();
 
 // Register
-router.post('/register', registerUser);
+router.post('/register', fileUpload.single('profilePhoto'), registerUser);
 // Login
 router.post('/login', loginUser);
 // Log out
