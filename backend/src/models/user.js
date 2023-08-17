@@ -45,18 +45,23 @@ const userSchema = new Schema(
       type: String,
       required: [true, 'Please enter profile'],
     },
+    profilePhoto: {
+      type: String,
+
+      default: 'https://via.placeholder.com/728x400.png?text=Visit+WhoAmI',
+    },
 
     // Store profile photo info in cloudinary
-    profilePhoto: {
-      public_id: {
-        type: String,
-        required: true,
-      },
-      url: {
-        type: String,
-        required: true,
-      },
-    },
+    // profilePhoto: {
+    //   public_id: {
+    //     type: String,
+    //     required: true,
+    //   },
+    //   url: {
+    //     type: String,
+    //     required: true,
+    //   },
+    // },
     gender: {
       type: String,
       enum: ['male', 'female', 'prefer not to say', 'others'],
