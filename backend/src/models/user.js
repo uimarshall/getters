@@ -227,6 +227,17 @@ userSchema.methods.getAccountVerificationToken = function () {
   return verificationToken;
 };
 
+// Use virtual field to get full name and not store it in the database
+userSchema.virtual('fullName').get(function () {
+  return `${this.firstName.charAt(0).toUpperCase() + this.firstName.slice(1)} ${
+    this.lastName.charAt(0).toUpperCase() + this.lastName.slice(1)
+  }`;
+});
+
+// Get the initials of a user using the virtual field
+userSchema.virtual('initials').get(function () {
+  return `${this.firstName[0].toUpperCase()}${this.lastName[0].toUpperCase()}`;
+});
 const User = model('User', userSchema);
 
 export default User;
