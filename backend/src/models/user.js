@@ -70,16 +70,22 @@ const userSchema = new Schema(
       type: String,
       enum: ['he/him', 'she/her', 'they/them', 'prefer not to say', 'others'],
     },
-    posts: [
-      {
-        type: [Schema.Types.ObjectId],
-        ref: 'Blog',
-      },
-    ],
-    postCount: {
-      type: Number,
-      default: 0,
-    },
+
+    // The post setup here is different from the one  below.Especially the type and ref fields.
+    // posts: [
+    //   {
+    //     type: [Schema.Types.ObjectId],
+    //     ref: 'Blog',
+    //   },
+    // ],
+
+    posts: [{ type: Schema.Types.ObjectId, ref: 'Blog' }],
+
+    // I remove postCount because it is not needed to overload the database with unnecessary data, we can use the posts array to get the number of posts a user has written, using virtual fields.
+    // postCount: {
+    //   type: Number,
+    //   default: 0,
+    // },
     bio: {
       type: String,
       maxlength: [160, 'Your bio must not exceed 160 characters'],
@@ -234,10 +240,41 @@ userSchema.virtual('fullName').get(function () {
   }`;
 });
 
+// Add a virtual field to get the user's post count from the posts array
+userSchema.virtual('postCount').get(function () {
+  return this.posts.length;
+});
+
 // Get the initials of a user using the virtual field
 userSchema.virtual('initials').get(function () {
   return `${this.firstName[0].toUpperCase()}${this.lastName[0].toUpperCase()}`;
 });
+
+// Get followers count using virtual field
+userSchema.virtual('followersCount').get(function () {
+  return this.followers.length;
+});
+
+// Get following count using virtual field
+userSchema.virtual('followingCount').get(function () {
+  return this.following.length;
+});
+
+// Get liked posts count using virtual field
+userSchema.virtual('likedPostsCount').get(function () {
+  return this.likedPosts.length;
+});
+
+// Get blocked users count using virtual field
+userSchema.virtual('blockedUsersCount').get(function () {
+  return this.blockedUsers.length;
+});
+
+// Get profile views count using virtual field
+// userSchema.virtual('profileViewsCount').get(function () {
+//   return this.profileViews;
+// });
+
 const User = model('User', userSchema);
 
 export default User;
