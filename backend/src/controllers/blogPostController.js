@@ -92,7 +92,7 @@ const createBlog = asyncHandler(async (req, res, next) => {
 
   // Associate post to a user
 
-  // await User.findByIdAndUpdate(req?.user?._id, { $push: { posts: savedBlog._id } }, { new: true });
+  await User.findByIdAndUpdate(req?.user?._id, { $push: { posts: savedBlog._id } }, { new: true });
 
   // await Category.findByIdAndUpdate(req?.user?._id, { $push: { posts: savedBlog._id } }, { new: true });
 

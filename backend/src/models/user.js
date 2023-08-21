@@ -166,6 +166,11 @@ const userSchema = new Schema(
         default: false,
       },
     },
+    plan: {
+      type: String,
+      enum: ['Free', 'Basic', 'Premium'],
+      default: 'Free',
+    },
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     likedPosts: [{ type: Schema.Types.ObjectId, ref: 'Blog' }],
     resetPasswordToken: String,
@@ -271,9 +276,9 @@ userSchema.virtual('blockedUsersCount').get(function () {
 });
 
 // Get profile views count using virtual field
-// userSchema.virtual('profileViewsCount').get(function () {
-//   return this.profileViews;
-// });
+userSchema.virtual('profileViewsCount').get(function () {
+  return this.profileViews;
+});
 
 const User = model('User', userSchema);
 
