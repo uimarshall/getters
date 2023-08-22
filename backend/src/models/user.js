@@ -1,8 +1,11 @@
+/* eslint-disable no-underscore-dangle */
 import { Schema, model } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import Blog from './blog.js';
+import logger from '../logger/logger.js';
 
 const userSchema = new Schema(
   {
@@ -184,6 +187,17 @@ const userSchema = new Schema(
     toObject: { virtuals: true },
   }
 );
+
+// Pre hooks
+// Find the last blog post by a user
+userSchema.pre(/^find/, async function (next) {
+  // get the user id
+  const userId = this._conditions._id;
+  // Get the post created by the user
+  const lastPost = await Blog.findOne({ author: userId }).sort({ createdAt: -1 }).limit(1);
+  logger.debug(lastPost);
+  next();
+});
 
 // Encrypt password before saving user to database
 userSchema.pre('save', async function (next) {
