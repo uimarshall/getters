@@ -194,8 +194,14 @@ userSchema.pre(/^find/, async function (next) {
   // get the user id
   const userId = this._conditions._id;
   // Get the post created by the user
-  const lastPost = await Blog.findOne({ author: userId }).sort({ createdAt: -1 }).limit(1);
-  logger.debug(lastPost);
+  const lastPost = await Blog.findOne({ author: userId }).sort({ createdAt: -1 });
+  // Get the last post date
+  const lastPostDate = lastPost.createdAt;
+  // Format the date
+  const formattedDate = new Date(lastPostDate).toDateString();
+  // Add the date as virtual field
+  userSchema.virtual('lastPostDate').get(() => formattedDate);
+  logger.debug(formattedDate);
   next();
 });
 
