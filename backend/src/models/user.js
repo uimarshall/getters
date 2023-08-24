@@ -191,17 +191,59 @@ const userSchema = new Schema(
 // Pre hooks
 // Find the last blog post by a user
 userSchema.pre(/^find/, async function (next) {
+  // populate the posts
+  this.populate({
+    path: 'posts',
+    // select: 'title slug author createdAt',
+  });
   // get the user id
   const userId = this._conditions._id;
   // Get the post created by the user
   const lastPost = await Blog.findOne({ author: userId }).sort({ createdAt: -1 });
   // Get the last post date
-  const lastPostDate = lastPost.createdAt;
+  const lastPostDate = new Date(lastPost?.createdAt);
   // Format the date
-  const formattedDate = new Date(lastPostDate).toDateString();
+  const formattedDate = lastPostDate.toDateString();
   // Add the date as virtual field
   userSchema.virtual('lastPostDate').get(() => formattedDate);
   logger.debug(formattedDate);
+
+  // Check if user is inactive for 90 days
+  // Get the current date
+  const currentDate = new Date();
+  // Get the difference between the last post date and the current date
+  const differenceInDate = currentDate - lastPostDate;
+  // Get the number of milliseconds since January 1, 1970
+  // const milliseconds = differenceInDate.getTime();
+
+  // Convert milliseconds to days
+  // const days = Math.floor(differenceInDate / (1000 * 60 * 60 * 24));
+  const days = differenceInDate / (1000 * 60 * 60 * 24);
+
+  logger.info(`Current date in days:, ${days}`);
+
+  // check for inactive users
+  if (days > 90) {
+    // Add isInactive virtual field to userSchema
+    userSchema.virtual('isInactive').get(() => true);
+  } else {
+    // Add isInactive virtual field to userSchema
+    userSchema.virtual('isInactive').get(() => false);
+  }
+
+  // const inactiveUser = new Date(lastPostDate).getTime() + 90 * 24 * 60 * 60 * 1000;
+  // const currentDate = new Date().getTime();
+  // if (inactiveUser < currentDate) {
+  //   // Set user to inactive
+  //   this._conditions.active = false;
+  //   // Save user
+  //   await this.save();
+  // } else {
+  //   // Set user to active
+  //   this._conditions.active = true;
+  //   // Save user
+  //   await this.save();
+  // }
   next();
 });
 
