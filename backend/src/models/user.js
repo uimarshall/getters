@@ -226,9 +226,13 @@ userSchema.pre(/^find/, async function (next) {
   if (days > 90) {
     // Add isInactive virtual field to userSchema
     userSchema.virtual('isInactive').get(() => true);
+    // Block the user for being inactive
+    await User.findByIdAndUpdate(userId, { isBlocked: true }, { new: true });
   } else {
     // Add isInactive virtual field to userSchema
     userSchema.virtual('isInactive').get(() => false);
+    // Unblock the user for being active
+    await User.findByIdAndUpdate(userId, { isBlocked: false }, { new: true });
   }
 
   // const inactiveUser = new Date(lastPostDate).getTime() + 90 * 24 * 60 * 60 * 1000;
