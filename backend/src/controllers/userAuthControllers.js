@@ -200,7 +200,7 @@ const getUserProfile = asyncHandler(async (req, res, next) => {
     .populate({
       path: 'followers', // populate the followers field
       model: 'User',
-      select: 'firstNname', // select the name and profilePic fields
+      select: 'firstName', // select the name and profilePic fields
     })
     .populate({
       path: 'following',

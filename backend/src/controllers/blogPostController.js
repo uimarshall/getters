@@ -21,7 +21,7 @@ import logger from '../logger/logger.js';
 // @route: /api/v1/blogs
 // @access: private
 const createBlog = asyncHandler(async (req, res, next) => {
-  logger.debug(req.file);
+  // logger.debug(req.file);
   const { title, body, categories, tags } = req.body;
 
   if (!title || !title.length) {
@@ -46,7 +46,7 @@ const createBlog = asyncHandler(async (req, res, next) => {
   const allCategories = await Category.find({});
   // Get category id
   const categoryIds = allCategories.map((category) => category._id.toString());
-  logger.debug(categoryIds);
+  // logger.debug(categoryIds);
   // Find all Tags
   const allTags = await Tag.find({});
   // Get tag id
@@ -112,7 +112,7 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
   const currentUserBlockedBy = await User.find({ blockedUsers: currentUser });
 
   const currentUserBlockedById = currentUserBlockedBy.map((user) => user._id);
-  logger.info(currentUserBlockedById);
+  // logger.info(currentUserBlockedById);
   // Get current time
   const currentTime = new Date();
   // Find all blogs that have been scheduled for publication
