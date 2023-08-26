@@ -1,8 +1,14 @@
+/* eslint-disable consistent-return */
+/* eslint-disable func-names */
+/* eslint-disable prefer-arrow-callback */
+/* eslint-disable no-underscore-dangle */
 import { Schema, model } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import Blog from './blog.js';
+import logger from '../logger/logger.js';
 
 const userSchema = new Schema(
   {
@@ -166,6 +172,11 @@ const userSchema = new Schema(
         default: false,
       },
     },
+    plan: {
+      type: String,
+      enum: ['Free', 'Basic', 'Premium'],
+      default: 'Free',
+    },
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     likedPosts: [{ type: Schema.Types.ObjectId, ref: 'Blog' }],
     resetPasswordToken: String,
@@ -179,6 +190,112 @@ const userSchema = new Schema(
     toObject: { virtuals: true },
   }
 );
+
+// ******************Pre hooks***********************
+// Find the last blog post by a user
+userSchema.pre('findOne', async function (next) {
+  // populate the posts
+  this.populate({
+    path: 'posts',
+    // select: 'title slug author createdAt',
+  });
+  // get the user id
+  const userId = this._conditions._id;
+  // Get the post created by the user
+  const allPostByFoundUser = await Blog.find({ author: userId }).sort({ createdAt: -1 });
+  logger.info(`All post by found user: ${allPostByFoundUser}`);
+  // Get the last post date
+  const lastPost = allPostByFoundUser[allPostByFoundUser.length - 1];
+  logger.info(`Last post date: ${lastPost?.createdAt}`);
+  const lastPostDate = new Date(lastPost?.createdAt);
+
+  // Format the date
+  const formattedDate = lastPostDate.toDateString();
+  // Add the date as virtual field
+  if (lastPostDate === undefined || lastPostDate === null || allPostByFoundUser.length === 0) {
+    userSchema.virtual('lastPostDate').get(() => 'No post yet');
+  } else {
+    userSchema.virtual('lastPostDate').get(() => formattedDate);
+    logger.debug(formattedDate);
+  }
+
+  // Check if user is inactive for 90 days
+  // Get the current date
+  const currentDate = new Date();
+  // Get the difference between the last post date and the current date
+  const differenceInDate = currentDate - lastPostDate;
+  // Get the number of milliseconds since January 1, 1970
+  // const milliseconds = differenceInDate.getTime();
+
+  // Convert milliseconds to days
+  // const days = Math.floor(differenceInDate / (1000 * 60 * 60 * 24));
+  const days = differenceInDate / (1000 * 60 * 60 * 24);
+
+  logger.info(`Current date in days:, ${days}`);
+
+  // check for inactive users
+  if (days > 90) {
+    // Add isInactive virtual field to userSchema
+    userSchema.virtual('isInactive').get(() => true);
+    // Block the user for being inactive
+    await User.findByIdAndUpdate(userId, { isBlocked: true }, { new: true });
+  } else {
+    // Add isInactive virtual field to userSchema
+    userSchema.virtual('isInactive').get(() => false);
+    // Unblock the user for being active
+    await User.findByIdAndUpdate(userId, { isBlocked: false }, { new: true });
+  }
+
+  // const inactiveUser = new Date(lastPostDate).getTime() + 90 * 24 * 60 * 60 * 1000;
+  // const currentDate = new Date().getTime();
+  // if (inactiveUser < currentDate) {
+  //   // Set user to inactive
+  //   this._conditions.active = false;
+  //   // Save user
+  //   await this.save();
+  // } else {
+  //   // Set user to active
+  //   this._conditions.active = true;
+  //   // Save user
+  //   await this.save();
+  // }
+
+  // **************The last date a user was active*********************
+  const daysAgoInActualDay = Math.floor(differenceInDate / (1000 * 60 * 60 * 24));
+  // const daysAgoInHours = Math.floor(differenceInDate / (1000 * 60 * 60));
+  logger.debug(`Days ago in actual day: ${daysAgoInActualDay}`);
+  // Add lastAcitveDate virtual field to userSchema
+  userSchema.virtual('lastActiveDate').get(function () {
+    if (daysAgoInActualDay === 0) {
+      return 'Today';
+    }
+    if (daysAgoInActualDay === 1) {
+      return 'Yesterday';
+    }
+    if (daysAgoInActualDay > 1 && daysAgoInActualDay < 7) {
+      return `${daysAgoInActualDay} days ago`;
+    }
+    if (daysAgoInActualDay === 7) {
+      return 'A week ago';
+    }
+    if (daysAgoInActualDay > 7 && daysAgoInActualDay < 30) {
+      return `${Math.floor(daysAgoInActualDay / 7)} weeks ago`;
+    }
+    if (daysAgoInActualDay === 30) {
+      return 'A month ago';
+    }
+    if (daysAgoInActualDay > 30 && daysAgoInActualDay < 365) {
+      return `${Math.floor(daysAgoInActualDay / 30)} months ago`;
+    }
+    if (daysAgoInActualDay === 365) {
+      return 'A year ago';
+    }
+    if (daysAgoInActualDay > 365) {
+      return `${Math.floor(daysAgoInActualDay / 365)} years ago`;
+    }
+  });
+  next();
+});
 
 // Encrypt password before saving user to database
 userSchema.pre('save', async function (next) {
@@ -271,9 +388,9 @@ userSchema.virtual('blockedUsersCount').get(function () {
 });
 
 // Get profile views count using virtual field
-// userSchema.virtual('profileViewsCount').get(function () {
-//   return this.profileViews;
-// });
+userSchema.virtual('profileViewsCount').get(function () {
+  return this.profileViews;
+});
 
 const User = model('User', userSchema);
 
