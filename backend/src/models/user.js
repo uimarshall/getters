@@ -151,8 +151,8 @@ const userSchema = new Schema(
     },
     userAward: {
       type: String,
-      enum: ['Bronze', 'Silver', 'Gold'],
-      default: 'Bronze',
+      enum: ['User', 'Silver', 'Pro'],
+      default: 'User',
     },
     lastLogin: {
       type: Date,
@@ -174,7 +174,7 @@ const userSchema = new Schema(
     },
     plan: {
       type: String,
-      enum: ['Free', 'Basic', 'Premium'],
+      enum: ['Free', 'Basic', 'Membership'],
       default: 'Free',
     },
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
@@ -202,17 +202,17 @@ userSchema.pre('findOne', async function (next) {
   // get the user id
   const userId = this._conditions._id;
   // Get the post created by the user
-  const allPostByFoundUser = await Blog.find({ author: userId }).sort({ createdAt: -1 });
-  logger.info(`All post by found user: ${allPostByFoundUser}`);
+  const allPostsCreatedByUser = await Blog.find({ author: userId }).sort({ createdAt: -1 });
+  logger.info(`All post by found user: ${allPostsCreatedByUser}`);
   // Get the last post date
-  const lastPost = allPostByFoundUser[allPostByFoundUser.length - 1];
+  const lastPost = allPostsCreatedByUser[allPostsCreatedByUser.length - 1];
   logger.info(`Last post date: ${lastPost?.createdAt}`);
   const lastPostDate = new Date(lastPost?.createdAt);
 
   // Format the date
   const formattedDate = lastPostDate.toDateString();
   // Add the date as virtual field
-  if (lastPostDate === undefined || lastPostDate === null || allPostByFoundUser.length === 0) {
+  if (lastPostDate === undefined || lastPostDate === null || allPostsCreatedByUser.length === 0) {
     userSchema.virtual('lastPostDate').get(() => 'No post yet');
   } else {
     userSchema.virtual('lastPostDate').get(() => formattedDate);
@@ -294,6 +294,46 @@ userSchema.pre('findOne', async function (next) {
       return `${Math.floor(daysAgoInActualDay / 365)} years ago`;
     }
   });
+
+  // Update userAward based on number of posts  and claps
+  // Store the number of claps for each post in an array
+  const clapsArray = [];
+  // Get the number of claps for each post
+  allPostsCreatedByUser.forEach((post) => {
+    clapsArray.push(post.claps);
+  });
+  logger.info(`Claps array: ${clapsArray}`);
+  // Get the number of posts
+  const numberOfPosts = allPostsCreatedByUser.length;
+  // Get the post with the highest number of views
+  // TODO: Finish the implementation of the post with the highest number of views
+  const postWithHighestViews = allPostsCreatedByUser.reduce((acc, curr) => {
+    if (acc.views > curr.views) {
+      return acc;
+    }
+    return curr;
+  }, 0);
+
+  // Get posts with the highest number of claps
+  const postWithHighestClaps = allPostsCreatedByUser.reduce((acc, curr) => {
+    if (acc.claps > curr.claps) {
+      return acc;
+    }
+    return curr;
+  }, 0);
+  // const numberOfViews = allPostsCreatedByUser.reduce((acc, curr) => acc + curr.views, 0);
+  logger.info(`Number of posts: ${numberOfPosts}`);
+  logger.info(`Number of views: ${postWithHighestViews}`);
+  //  check if number of posts is greater than 500 but less than 100
+  if (numberOfPosts > 500 && numberOfPosts < 1000 && postWithHighestViews > 1000) {
+    await User.findByIdAndUpdate(userId, { userAward: 'Silver' }, { new: true });
+  }
+
+  //  check if number of posts is greater than 1000 or equal to 1000
+  if (numberOfPosts >= 1000 && postWithHighestViews > 1000) {
+    await User.findByIdAndUpdate(userId, { userAward: 'Pro' }, { new: true });
+  }
+
   next();
 });
 
