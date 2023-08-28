@@ -12,6 +12,7 @@ import {
   dislikeBlogPost,
   clapBlogPost,
   schedulePublication,
+  relatedBlogPosts,
 } from '../controllers/blogPostController.js';
 import { requireAuthentication } from '../middlewares/authMiddleware.js';
 import accountVerificationHandler from '../middlewares/accountVerificationMiddleware.js';
@@ -38,5 +39,8 @@ router.post('/claps/:postId', requireAuthentication, clapBlogPost);
 
 // publication date of the post
 router.put('/schedule-publication/:postId', requireAuthentication, schedulePublication);
+
+// Related blogs
+router.post('/related-blog', relatedBlogPosts);
 
 export default router;
