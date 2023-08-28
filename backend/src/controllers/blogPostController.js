@@ -9,6 +9,7 @@ import asyncHandler from 'express-async-handler';
 import slugify from 'slugify';
 import { StatusCodes } from 'http-status-codes';
 import _ from 'lodash';
+import { request } from 'http';
 import Blog from '../models/blog.js';
 import Category from '../models/category.js';
 import Tag from '../models/tag.js';
@@ -200,7 +201,7 @@ const getSingleBlog = asyncHandler(async (req, res, next) => {
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('author', '_id firstName lastName username')
-    .select('_id title body slug metaTitle metaDesc categories tags postedBy createdAt updatedAt');
+    .select('_id title body slug metaTitle metaDesc categories tags author createdAt updatedAt');
   if (!blogFound) {
     return next(new ErrorHandler('Blog post not found', StatusCodes.NOT_FOUND));
   }
@@ -442,6 +443,69 @@ const schedulePublication = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Related posts
+// @route: GET or POST /api/v1/blogs/related-posts/:postId
+// @access: public
+
+// ****************This first implementation is for using GET**********************
+// const relatedPosts = asyncHandler(async (req, res, next) => {
+//   const { postId } = req.params;
+//   const blog = await Blog.findById(postId);
+//   if (!blog) {
+//     return next(new ErrorHandler(`Blog post not found`, StatusCodes.NOT_FOUND));
+//   }
+
+//   const relatedPosts = await Blog.find({
+//     _id: { $ne: blog._id },
+//     categories: { $in: blog.categories },
+//   })
+//     .limit(3)
+//     .populate('categories', '_id name slug')
+//     .populate('tags', '_id name slug')
+//     .populate('author', '_id firstName lastName username')
+//     .select('_id title slug excerpt categories tags author createdAt updatedAt');
+
+//   return res.status(StatusCodes.OK).json({
+//     success: true,
+//     message: 'Related posts fetched successfully',
+//     data: relatedPosts,
+//   });
+// });
+
+// ************USING POST - req.body**********************
+// @route: POST /api/v1/blogs/related-blog
+const relatedBlogPosts = asyncHandler(async (req, res, next) => {
+  // set limit
+  const limit = req.body.limit ? parseInt(req.body.limit, 10) : 3;
+
+  // get id and categories from the request body in the frontend
+  const { _id, categories } = req.body.blog;
+
+  const blog = await Blog.findById(_id);
+  if (!blog) {
+    return next(new ErrorHandler(`Blog post not found`, StatusCodes.NOT_FOUND));
+  }
+
+  const relatedPosts = await Blog.find({
+    _id: { $ne: _id },
+    categories: { $in: categories },
+  })
+    .limit(limit)
+    .populate('categories', '_id name slug')
+    .populate('tags', '_id name slug')
+    .populate('author', '_id firstName lastName username profile')
+    .select('_id title slug excerpt categories tags author createdAt updatedAt');
+  if (!relatedPosts) {
+    return next(new ErrorHandler(`No related posts found`, StatusCodes.NOT_FOUND));
+  }
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Related posts fetched successfully',
+    data: relatedPosts,
+  });
+});
+
 export {
   createBlog,
   getAllBlogs,
@@ -454,4 +518,5 @@ export {
   dislikeBlogPost,
   clapBlogPost,
   schedulePublication,
+  relatedBlogPosts,
 };
