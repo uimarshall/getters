@@ -506,6 +506,31 @@ const relatedBlogPosts = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Search Blog Posts
+// @route: GET /api/v1/blogs/search
+// @access: public
+
+const searchBlogPosts = asyncHandler(async (req, res, next) => {
+  const { search } = req.query;
+  if (!search) {
+    return next(new ErrorHandler('Please enter a search term', StatusCodes.BAD_REQUEST));
+  }
+  const blogs = await Blog.find({ $text: { $search: search } })
+    .populate('categories', '_id name slug')
+    .populate('tags', '_id name slug')
+    .populate('author', '_id firstName lastName username')
+    .select('_id title slug excerpt categories tags author createdAt updatedAt');
+  if (!blogs) {
+    return next(new ErrorHandler(`No related posts found`, StatusCodes.NOT_FOUND));
+  }
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Related posts fetched successfully',
+    data: blogs,
+  });
+});
+
 export {
   createBlog,
   getAllBlogs,
@@ -519,4 +544,5 @@ export {
   clapBlogPost,
   schedulePublication,
   relatedBlogPosts,
+  searchBlogPosts,
 };
