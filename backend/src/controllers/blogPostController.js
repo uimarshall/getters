@@ -10,6 +10,7 @@ import slugify from 'slugify';
 import { StatusCodes } from 'http-status-codes';
 import _ from 'lodash';
 import { request } from 'http';
+import { title } from 'process';
 import Blog from '../models/blog.js';
 import Category from '../models/category.js';
 import Tag from '../models/tag.js';
@@ -531,6 +532,30 @@ const searchBlogPosts = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Search body and title of blog post
+const searchBlogPostsAll = asyncHandler(async (req, res, next) => {
+  const { search } = req.query;
+  if (!search) {
+    return next(new ErrorHandler('Please enter a search term', StatusCodes.BAD_REQUEST));
+  }
+  const blogs = await Blog.find({
+    $or: [{ title: { $regex: search, $options: 'i' } }, { body: { $regex: search, $options: 'i' } }],
+  })
+    .populate('categories', '_id name slug')
+    .populate('tags', '_id name slug')
+    .populate('author', '_id firstName lastName username')
+    .select('_id title slug excerpt categories tags author createdAt updatedAt');
+  if (!blogs) {
+    return next(new ErrorHandler(`No related posts found`, StatusCodes.NOT_FOUND));
+  }
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Related posts fetched successfully',
+    data: blogs,
+  });
+});
+
 export {
   createBlog,
   getAllBlogs,
@@ -545,4 +570,5 @@ export {
   schedulePublication,
   relatedBlogPosts,
   searchBlogPosts,
+  searchBlogPostsAll,
 };

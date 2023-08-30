@@ -13,6 +13,7 @@ import {
   clapBlogPost,
   schedulePublication,
   relatedBlogPosts,
+  searchBlogPosts,
 } from '../controllers/blogPostController.js';
 import { requireAuthentication } from '../middlewares/authMiddleware.js';
 import accountVerificationHandler from '../middlewares/accountVerificationMiddleware.js';
@@ -42,5 +43,8 @@ router.put('/schedule-publication/:postId', requireAuthentication, schedulePubli
 
 // Related blogs
 router.post('/related-blog', relatedBlogPosts);
+
+// search blog posts
+router.post('/search', searchBlogPosts);
 
 export default router;
