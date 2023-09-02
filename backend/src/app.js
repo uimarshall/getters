@@ -14,6 +14,10 @@ import commentRoutes from './routes/commentRoutes.js';
 
 // Load the environment variables
 dotenv.config({ path: 'backend/src/config/.env' });
+// set up for production
+if (process.env.NODE_ENV === 'PRODUCTION') {
+  dotenv.config({ path: 'backend/src/config/.env' });
+}
 
 const app = express();
 
