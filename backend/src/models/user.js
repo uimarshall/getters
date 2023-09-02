@@ -399,7 +399,7 @@ userSchema.virtual('fullName').get(function () {
 
 // Add a virtual field to get the user's post count from the posts array
 userSchema.virtual('postCount').get(function () {
-  return this.posts.length;
+  return this.posts?.length;
 });
 
 // Get the initials of a user using the virtual field
@@ -408,24 +408,24 @@ userSchema.virtual('initials').get(function () {
 });
 
 // Get followers count using virtual field
-userSchema.virtual('followersCount').get(function () {
-  return this.followers.length;
-});
+// userSchema.virtual('followersCount').get(function () {
+//   return this.followers.length;
+// });
 
 // Get following count using virtual field
-userSchema.virtual('followingCount').get(function () {
-  return this.following.length;
-});
+// userSchema.virtual('followingCount').get(function () {
+//   return this.following.length;
+// });
 
 // Get liked posts count using virtual field
-userSchema.virtual('likedPostsCount').get(function () {
-  return this.likedPosts.length;
-});
+// userSchema.virtual('likedPostsCount').get(function () {
+//   return this.likedPosts.length;
+// });
 
 // Get blocked users count using virtual field
-userSchema.virtual('blockedUsersCount').get(function () {
-  return this.blockedUsers.length;
-});
+// userSchema.virtual('blockedUsersCount').get(function () {
+//   return this.blockedUsers.length;
+// });
 
 // Get profile views count using virtual field
 userSchema.virtual('profileViewsCount').get(function () {

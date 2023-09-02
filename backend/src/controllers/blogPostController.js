@@ -128,21 +128,21 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
   // });
 
   // Filter Category
-  const { category } = req.query;
+  const { categories } = req.query;
   // const queryCategory = category ? { categories: category } : {};
 
-  const query = {
+  let query = {
     author: { $nin: currentUserBlockedById }, // Only return blog post from users that have not blocked the current logged in user
     $or: [{ schedulePublications: { $lte: currentTime } }, { schedulePublications: null }],
     // Only include blogs that have been scheduled for publication and have not been published,
   };
-  // if (category) {
-  //   query = { ...query, categories: category };
-  // }
-
-  if (category) {
-    query.categories = category;
+  if (categories) {
+    query = { ...query, categories };
   }
+
+  // if (category) {
+  //   query.categories = category;
+  // }
 
   const blogs = await Blog.find(query)
     .populate('categories', '_id name slug')
