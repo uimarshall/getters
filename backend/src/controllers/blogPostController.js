@@ -10,6 +10,7 @@ import slugify from 'slugify';
 import { StatusCodes } from 'http-status-codes';
 import _ from 'lodash';
 import { request } from 'http';
+import { title } from 'process';
 import Blog from '../models/blog.js';
 import Category from '../models/category.js';
 import Tag from '../models/tag.js';
@@ -126,11 +127,24 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
   //   published: false,
   // });
 
-  const blogs = await Blog.find({
+  // Filter Category
+  const { categories } = req.query;
+  // const queryCategory = category ? { categories: category } : {};
+
+  let query = {
     author: { $nin: currentUserBlockedById }, // Only return blog post from users that have not blocked the current logged in user
     $or: [{ schedulePublications: { $lte: currentTime } }, { schedulePublications: null }],
     // Only include blogs that have been scheduled for publication and have not been published,
-  })
+  };
+  if (categories) {
+    query = { ...query, categories };
+  }
+
+  // if (category) {
+  //   query.categories = category;
+  // }
+
+  const blogs = await Blog.find(query)
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('author', '_id firstName lastName username') // populate the author field in the Blog schema by the Id, firstName and lastName of the user who created the blog.
@@ -506,6 +520,55 @@ const relatedBlogPosts = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Search Blog Posts
+// @route: GET /api/v1/blogs/search
+// @access: public
+
+const searchBlogPosts = asyncHandler(async (req, res, next) => {
+  const { search } = req.query;
+  if (!search) {
+    return next(new ErrorHandler('Please enter a search term', StatusCodes.BAD_REQUEST));
+  }
+  const blogs = await Blog.find({ $text: { $search: search } })
+    .populate('categories', '_id name slug')
+    .populate('tags', '_id name slug')
+    .populate('author', '_id firstName lastName username')
+    .select('_id title slug excerpt categories tags author createdAt updatedAt');
+  if (!blogs) {
+    return next(new ErrorHandler(`No related posts found`, StatusCodes.NOT_FOUND));
+  }
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Related posts fetched successfully',
+    data: blogs,
+  });
+});
+
+// Search body and title of blog post
+const searchBlogPostsAll = asyncHandler(async (req, res, next) => {
+  const { search } = req.query;
+  if (!search) {
+    return next(new ErrorHandler('Please enter a search term', StatusCodes.BAD_REQUEST));
+  }
+  const blogs = await Blog.find({
+    $or: [{ title: { $regex: search, $options: 'i' } }, { body: { $regex: search, $options: 'i' } }],
+  })
+    .populate('categories', '_id name slug')
+    .populate('tags', '_id name slug')
+    .populate('author', '_id firstName lastName username')
+    .select('_id title slug excerpt categories tags author createdAt updatedAt');
+  if (!blogs) {
+    return next(new ErrorHandler(`No related posts found`, StatusCodes.NOT_FOUND));
+  }
+
+  return res.status(StatusCodes.OK).json({
+    success: true,
+    message: 'Related posts fetched successfully',
+    data: blogs,
+  });
+});
+
 export {
   createBlog,
   getAllBlogs,
@@ -519,4 +582,6 @@ export {
   clapBlogPost,
   schedulePublication,
   relatedBlogPosts,
+  searchBlogPosts,
+  searchBlogPostsAll,
 };
