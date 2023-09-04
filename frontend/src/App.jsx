@@ -1,23 +1,16 @@
 // import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
+
+import Home from './components/pages/Home';
 import './App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Login from './components/pages/Login';
 
 function App() {
-  const Home = () => {
-    return (
-      <div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <p className="text-3xl font-bold underline">Gethub</p>
-      </div>
-    );
-  };
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </BrowserRouter>
   );
